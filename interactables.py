@@ -1,5 +1,11 @@
 from tkinter import *
-from PIL import ImageTk, Image
+
+import os
+try:
+    from PIL import ImageTk, Image
+except ModuleNotFoundError:
+    os.system('cmd /c "pip install Pillow"')
+    from PIL import ImageTk, Image
 
 root = Tk()
 
