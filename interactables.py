@@ -7,8 +7,6 @@ except ModuleNotFoundError:
     os.system('cmd /c "pip install Pillow"')
     from PIL import ImageTk, Image
 
-root = Tk()
-
 def create_background(frame, side, expand, border=5, cursor=False):
     if cursor:
         background = Frame(frame, borderwidth=border, cursor="hand2")
@@ -135,11 +133,15 @@ def jump_point(text, toggle=False):
             height = root.pack_slaves()[3].winfo_height()
             print(width, height)
 
-create_label(root, "label")
-create_button(root, "button 1", expand=False)
-create_button(root, "button 2")
-create_toggle(root, "toggle 1", expand=False)
-create_toggle(root, "toggle 2")
+if __name__ == '__main__':
 
-root.geometry("300x300")
-root.mainloop()
+    root = Tk()
+
+    create_label(root, "label")
+    create_button(root, "button 1", expand=False)
+    create_button(root, "button 2")
+    create_toggle(root, "toggle 1", expand=False)
+    create_toggle(root, "toggle 2")
+
+    root.geometry("300x300")
+    root.mainloop()
