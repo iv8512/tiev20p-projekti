@@ -39,8 +39,9 @@ def text_handler(text):
         text, size, state = text, 10, NORMAL
     return text, size, state
 
-def create_label(frame, text, size=10, expand=True):
-    label = Label(frame, text=text)
+def create_label(frame, text, expand=True):
+    text, size, state = text_handler(text)
+    label = Label(frame, text=text, state=state)
     label.pack(side="top", fill="both", expand=expand)
     label.config(fg="white", bg="#323233")
     label.config(font=("TkDefaultFont", size))
@@ -50,7 +51,7 @@ def create_button(frame, text, side="top", expand=True):
     text, size, state = text_handler(text)
     background = create_background(frame, side, expand)
     # Main
-    button = Label(background, text=text, cursor="hand2")
+    button = Label(background, text=text, state=state, cursor="hand2")
     button.pack(side=side, fill="both", expand=True)
     button.config(bg="#323233", fg="white")
     button.config(height=2, font=("TkDefaultFont", size))
@@ -65,7 +66,7 @@ def create_toggle(frame, text, side="top", expand=True):
     background = create_background(frame, side, expand)
     image_label = create_image(background, text, expand)
     # Main
-    button = Label(background, text=text, cursor="hand2")
+    button = Label(background, text=text, state=state, cursor="hand2")
     button.pack(side="right", fill="both", expand=True)
     button.config(bg="#323233", fg="white")
     button.config(height=2, font=("TkDefaultFont", size))
@@ -128,12 +129,13 @@ def jump_point(text, toggle=False):
                 images = image_handler(text, "Toggle Off.png")
             toggle.configure(image=images[text])
         case _:
-            width = root.pack_slaves()[1].winfo_width()
-            height = root.pack_slaves()[1].winfo_height()
+            width = root.pack_slaves()[3].winfo_width()
+            height = root.pack_slaves()[3].winfo_height()
             print(width, height)
 
 create_label(root, "label")
-create_button(root, "button")
+create_button(root, "button 1", expand=False)
+create_button(root, "button 2")
 create_toggle(root, "toggle 1", expand=False)
 create_toggle(root, "toggle 2")
 
