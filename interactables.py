@@ -37,11 +37,11 @@ def text_handler(text):
         text, size, state = text, 10, NORMAL
     return text, size, state
 
-def create_label(frame, text, fill="both", expand=True):
+def create_label(frame, text, fill="both", expand=True, bg="#323233"):
     text, size, state = text_handler(text)
     label = Label(frame, text=text, state=state)
     label.pack(side="top", fill=fill, expand=expand)
-    label.config(fg="white", bg="#323233")
+    label.config(fg="white", bg=bg)
     label.config(font=("TkDefaultFont", size))
 
 def create_button(frame, text, side="top", fill="both", expand=True):
