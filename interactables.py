@@ -37,10 +37,10 @@ def text_handler(text):
         text, size, state = text, 10, NORMAL
     return text, size, state
 
-def create_label(frame, text, expand=True):
+def create_label(frame, text, fill="both", expand=True):
     text, size, state = text_handler(text)
     label = Label(frame, text=text, state=state)
-    label.pack(side="top", fill="both", expand=expand)
+    label.pack(side="top", fill=fill, expand=expand)
     label.config(fg="white", bg="#323233")
     label.config(font=("TkDefaultFont", size))
 
