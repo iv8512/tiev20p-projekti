@@ -7,12 +7,12 @@ except ModuleNotFoundError:
     os.system('cmd /c "pip install Pillow"')
     from PIL import ImageTk, Image
 
-def create_background(frame, side, expand, border=5, cursor=False):
+def create_background(frame, side, fill, expand, border=5, cursor=False):
     if cursor:
         background = Frame(frame, borderwidth=border, cursor="hand2")
     else:
         background = Frame(frame, borderwidth=border)
-    background.pack(side=side, fill="both", expand=expand)
+    background.pack(side=side, fill=fill, expand=expand)
     background.config(bg="#323233")
     return background
 
@@ -44,10 +44,10 @@ def create_label(frame, text, expand=True):
     label.config(fg="white", bg="#323233")
     label.config(font=("TkDefaultFont", size))
 
-def create_button(frame, text, side="top", expand=True):
+def create_button(frame, text, side="top", fill="both", expand=True):
     # Other
     text, size, state = text_handler(text)
-    background = create_background(frame, side, expand)
+    background = create_background(frame, side, fill, expand)
     # Main
     button = Label(background, text=text, state=state, cursor="hand2")
     button.pack(side=side, fill="both", expand=True)
@@ -59,10 +59,10 @@ def create_button(frame, text, side="top", expand=True):
     button.bind("<Leave>", lambda event: background.config(bg="#323233"))
     return button
 
-def create_toggle(frame, text, side="top", expand=True):
+def create_toggle(frame, text, side="top", fill="both", expand=True):
     # Other
     text, size, state = text_handler(text)
-    background = create_background(frame, side, expand)
+    background = create_background(frame, side, fill, expand)
     image_label = create_toggle_image(background, text, expand)
     # Main
     toggle = Label(background, text=text, state=state, cursor="hand2")
@@ -78,7 +78,7 @@ def create_toggle(frame, text, side="top", expand=True):
 def create_toggle_image(background, text, expand, file="Toggle On.png"):
     images = image_handler(text, file)
     if expand:
-        frame = create_background(background, "right", False, 0, True)
+        frame = create_background(background, "right", "both", False, 0, True)
         frame.bind("<Button-1>", lambda event: jump_point(f"Toggle {text}", label))
         frame.bind("<Enter>", lambda event: background.config(bg="#575759"))
         frame.bind("<Leave>", lambda event: background.config(bg="#323233"))
@@ -117,25 +117,25 @@ def toggle_handler(text):
 images = {}
 toggles = {}
 
-def jump_point(text, toggle=False):
-    print(text.split())
-    match text.split():
-        case ["Toggle", *text]:
-            text = " ".join(text)
-            state = toggle_handler(text)
-            if state:
-                images = image_handler(text, "Toggle On.png")
-            else:
-                images = image_handler(text, "Toggle Off.png")
-            toggle.configure(image=images[text])
-        case _:
-            width = root.pack_slaves()[3].winfo_width()
-            height = root.pack_slaves()[3].winfo_height()
-            print(width, height)
-
 if __name__ == '__main__':
 
-    root = Tk()
+    def jump_point(text, toggle=False):
+        print(text.split())
+        match text.split():
+            case ["Toggle", *text]:
+                text = " ".join(text)
+                state = toggle_handler(text)
+                if state:
+                    images = image_handler(text, "Toggle On.png")
+                else:
+                    images = image_handler(text, "Toggle Off.png")
+                toggle.configure(image=images[text])
+            case _:
+                width = root.pack_slaves()[3].winfo_width()
+                height = root.pack_slaves()[3].winfo_height()
+                print(width, height)
+
+    root= Tk()
 
     create_label(root, "label")
     create_button(root, "button 1", expand=False)
