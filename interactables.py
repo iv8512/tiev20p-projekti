@@ -65,27 +65,18 @@ def create_toggle(frame, text, side="top", expand=True):
     # Other
     text, size, state = text_handler(text)
     background = create_background(frame, side, expand)
-    image_label = create_image(background, text, expand)
     image_label = create_toggle_image(background, text, expand)
     # Main
-    button = Label(background, text=text, state=state, cursor="hand2")
-    button.pack(side="right", fill="both", expand=True)
-    button.config(bg="#323233", fg="white")
-    button.config(height=2, font=("TkDefaultFont", size))
-    button.bind("<Button-1>", lambda event: jump_point(f"Toggle {text}", image_label))
     toggle = Label(background, text=text, state=state, cursor="hand2")
     toggle.pack(side="right", fill="both", expand=True)
     toggle.config(bg="#323233", fg="white")
     toggle.config(height=2, font=("TkDefaultFont", size))
     toggle.bind("<Button-1>", lambda event: jump_point(f"Toggle {text}", image_label))
     # Hover effect
-    button.bind("<Enter>", lambda event: background.config(bg="#575759"))
-    button.bind("<Leave>", lambda event: background.config(bg="#323233"))
     toggle.bind("<Enter>", lambda event: background.config(bg="#575759"))
     toggle.bind("<Leave>", lambda event: background.config(bg="#323233"))
     return toggle
 
-def create_image(background, text, expand, file="Toggle On.png"):
 def create_toggle_image(background, text, expand, file="Toggle On.png"):
     images = image_handler(text, file)
     if expand:
