@@ -19,10 +19,24 @@ def create_background(frame, side, expand, border=5, cursor=False):
     return background
 
 def text_handler(text):
-    if type(text) == tuple:
-        text, size, state = text[0], text[1], NORMAL
+    #JL6079
+    """
+    checks if ´text´is tuple
+    checks how many items are in ´text´
+    """
+    #Two items
+    if type(text) == tuple and len(text) == 2:
+        #checks if 2nd item is an integer
+        if type(text[1]) == int:
+            text, size, state = text[0], text[1], NORMAL
+        else:
+            text, size, state = text[0], 10, text[1]
+    #Three items
+    elif type(text) == tuple and len(text) == 3:
+        text, size, state = text[0], text[1], text[2]
+    #One iem    
     else:
-        size, state = 10, NORMAL
+        text, size, state = text, 10, NORMAL
     return text, size, state
 
 def create_label(frame, text, size=10, expand=True):
