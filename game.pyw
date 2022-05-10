@@ -1,4 +1,5 @@
 from tkinter import *
+from colours import *
 import json
 #from interactables import *
 
@@ -37,18 +38,6 @@ class InfoClass:
                     print(f"  {colour}")
         
 info = InfoClass()
-
-
-
-with open("settings.json") as data:
-    settings = json.load(data)
-
-C1 = settings["Colours"]["Base Colours"]["1."]
-C2 = settings["Colours"]["Base Colours"]["2."]
-C3 = settings["Colours"]["Base Colours"]["3."]
-C4 = settings["Colours"]["Base Colours"]["4."]
-
-
 
 """
 
@@ -232,6 +221,7 @@ def clear_frame():
 create_label(sidebar, "test")
 
 root.bind("<Escape>", quit) #sys.exit
+#root.iconbitmap("blume.ico")
 root.title("Pac-man")
 #root.geometry("1000x600+100+100")
 #root.minsize(250, 200)
