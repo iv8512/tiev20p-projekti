@@ -38,6 +38,18 @@ class InfoClass:
         
 info = InfoClass()
 
+
+
+with open("settings.json") as data:
+    settings = json.load(data)
+
+C1 = settings["Colours"]["Base Colours"]["1."]
+C2 = settings["Colours"]["Base Colours"]["2."]
+C3 = settings["Colours"]["Base Colours"]["3."]
+C4 = settings["Colours"]["Base Colours"]["4."]
+
+
+
 """
 
 START
