@@ -54,15 +54,16 @@ def create_label(frame, text, fill="both", expand=True, bg="#323233"):
     label.pack(side="top", fill=fill, expand=expand)
     label.config(fg="white", bg=bg)
     label.config(font=("TkDefaultFont", size))
+    return label
 
-def create_button(frame, text, side="top", fill="both", expand=True):
+def create_button(frame, text, side="top", fill="both", expand=True, bg="#323233"):
     # Other
     text, size, state = text_handler(text)
     background = create_background(frame, side, fill, expand)
     # Main
     button = Label(background, text=text, state=state, cursor="hand2")
     button.pack(side=side, fill="both", expand=True)
-    button.config(bg="#323233", fg="white")
+    button.config(bg=bg, fg="white")
     button.config(height=2, font=("TkDefaultFont", size))
     button.bind("<Button-1>", lambda event: jump_point(text))
     # Hover effect
@@ -138,33 +139,45 @@ mainframe = Frame(root)
 mainframe.pack(side="top", fill="both", expand=True)
 mainframe.config(bg="#1B1B1B")
 
-padding = Frame(mainframe)
-padding.pack(side="top", fill="none", expand=True)
-padding.config(bg="#323233")
-padding.config(width=400, height=150)
-padding.pack_propagate(0)
-
-menubar = Frame(mainframe)
-menubar.pack(side="top", fill="x", expand=True)
-menubar.config(bg="#323233")
-
 def jump_point(text):
     match text.split():
         case ["temp"]:
             pass
         case _:
             print(text)
-            
+            switch_frame(text)
 
 def switch_frame(frame):
     clear_frame()
     if frame == "Mainmenu":
-        create_label(padding, ("Pac-man", 50), fill="none", expand=True)
+        padding = create_label(mainframe, "", "x", True)
+        create_label(padding, "", "none", True)
+        create_label(padding, ("Pac-man", 50), "none", True)
+        create_label(padding, "", "none", True)
+        menubar = create_label(mainframe, "test", "x", expand=True)
         create_button(menubar, ("Play", 20), "left", "x", True)
         create_button(menubar, ("LVL-Selector", 20), "left", "x", True)
         create_button(menubar, ("Settings", 20), "left", "x", True)
-    elif frame == "":
-        pass
+        
+    elif frame == "Play":
+        create_label(mainframe, ("test"))
+        
+    elif frame == "LVL-Selector":
+        create_label(mainframe, ("", 100), "y", True, "#1b1b1b")
+        lvl_padding = create_label(mainframe, "", "y", False)
+        lvl_box = create_label(lvl_padding, ("", 100), "x", True, "#1b1b1b")
+        create_button(lvl_box, ("LVL-1", 20), "left", "x", False, "#252526")
+        create_button(lvl_box, ("LVL-2", 20), "left", "x", False, "#252526")
+        create_button(lvl_box, ("LVL-3", 20), "left", "x", False, "#252526")
+        create_button(lvl_box, ("LVL-4", 20), "left", "x", False, "#252526")
+        create_button(lvl_box, ("LVL-5", 20), "left", "x", False, "#252526")
+        create_label(mainframe, ("", 100), "y", True, "#1b1b1b")
+
+        side_menu = create_label(mainframe, "", "y", True, "#222222")
+        
+    elif frame == "Settings":
+        create_label(mainframe, "settings")
+        
 
 def clear_frame():
     for item in mainframe.slaves():
