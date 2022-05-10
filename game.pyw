@@ -51,7 +51,7 @@ def create_background(frame, side, fill, expand, border=5, cursor=False):
     else:
         background = Frame(frame, borderwidth=border)
     background.pack(side=side, fill=fill, expand=expand)
-    background.config(bg="#323233")
+    background.config(bg=C3)
     return background
 
 def text_handler(text):
@@ -75,15 +75,15 @@ def text_handler(text):
         text, size, state = text, 10, NORMAL
     return text, size, state
 
-def create_label(frame, text, fill="both", expand=True, bg="#323233"):
+def create_label(frame, text, side="top", fill="both", expand=True, bg=C3):
     text, size, state = text_handler(text)
     label = Label(frame, text=text, state=state)
-    label.pack(side="top", fill=fill, expand=expand)
+    label.pack(side=side, fill=fill, expand=expand)
     label.config(fg="white", bg=bg)
     label.config(font=("TkDefaultFont", size))
     return label
 
-def create_button(frame, text, side="top", fill="both", expand=True, bg="#323233"):
+def create_button(frame, text, side="top", fill="both", expand=True, bg=C3):
     # Other
     text, size, state = text_handler(text)
     background = create_background(frame, side, fill, expand)
@@ -94,8 +94,8 @@ def create_button(frame, text, side="top", fill="both", expand=True, bg="#323233
     button.config(height=2, font=("TkDefaultFont", size))
     button.bind("<Button-1>", lambda event: jump_point(text))
     # Hover effect
-    button.bind("<Enter>", lambda event: background.config(bg="#575759"))
-    button.bind("<Leave>", lambda event: background.config(bg="#323233"))
+    button.bind("<Enter>", lambda event: background.config(bg=C4))
+    button.bind("<Leave>", lambda event: background.config(bg=C3))
     return button
 
 def create_toggle(frame, text, side="top", fill="both", expand=True):
@@ -106,12 +106,12 @@ def create_toggle(frame, text, side="top", fill="both", expand=True):
     # Main
     toggle = Label(background, text=text, state=state, cursor="hand2")
     toggle.pack(side="right", fill="both", expand=True)
-    toggle.config(bg="#323233", fg="white")
+    toggle.config(bg=C3, fg="white")
     toggle.config(height=2, font=("TkDefaultFont", size))
     toggle.bind("<Button-1>", lambda event: jump_point(f"Toggle {text}", image_label))
     # Hover effect
-    toggle.bind("<Enter>", lambda event: background.config(bg="#575759"))
-    toggle.bind("<Leave>", lambda event: background.config(bg="#323233"))
+    toggle.bind("<Enter>", lambda event: background.config(bg=C4))
+    toggle.bind("<Leave>", lambda event: background.config(bg=C3))
     return toggle
 
 def create_toggle_image(background, text, expand, file="Toggle On.png"):
@@ -119,18 +119,18 @@ def create_toggle_image(background, text, expand, file="Toggle On.png"):
     if expand:
         frame = create_background(background, "right", "both", False, 0, True)
         frame.bind("<Button-1>", lambda event: jump_point(f"Toggle {text}", label))
-        frame.bind("<Enter>", lambda event: background.config(bg="#575759"))
-        frame.bind("<Leave>", lambda event: background.config(bg="#323233"))
+        frame.bind("<Enter>", lambda event: background.config(bg=C4))
+        frame.bind("<Leave>", lambda event: background.config(bg=C3))
     else:
         frame = background
     # Main
     label = Label(frame, image=images[text], cursor="hand2")
     label.pack(side="right", expand=False)
-    label.config(bg="#323233")
+    label.config(bg=C3)
     # Binds
     label.bind("<Button-1>", lambda event: jump_point(f"Toggle {text}", label))
-    label.bind("<Enter>", lambda event: background.config(bg="#575759"))
-    label.bind("<Leave>", lambda event: background.config(bg="#323233"))
+    label.bind("<Enter>", lambda event: background.config(bg=C4))
+    label.bind("<Leave>", lambda event: background.config(bg=C3))
     return label
 
 def image_handler(text, file):
@@ -156,24 +156,33 @@ def toggle_handler(text):
 images = {}
 toggles = {}
 
+def create_row(frame, side="top", fill="both", expand=True, border=5, bg=C2):
+    frame = Frame(frame, borderwidth=border)
+    frame.pack(side=side, fill=fill, expand=expand)
+    frame.config(bg=bg)
+    return frame
+
 """
 
 END
 
 """
 
-mainframe = Frame(root)
+mainframe = Frame(root, borderwidth=10)
 mainframe.pack(side="left", fill="both", expand=True)
-mainframe.config(bg="#1B1B1B")
+mainframe.config(bg=C1)
 
-sidebar = Frame(root, width=400)
-sidebar.pack(side="left", fill="both")
-sidebar.pack_propagate(0)
+side_bar = Frame(root, width=400)
+side_bar.pack(side="left", fill="both")
+side_bar.config(bg=C2)
+side_bar.pack_propagate(0)
 
 def jump_point(text):
     match text.split():
-        case ["temp"]:
-            pass
+        case ["Quit"]:
+            quit()
+        case ["Back"]:
+            switch_frame("Mainmenu")
         case _:
             print(text)
             switch_frame(text)
@@ -181,44 +190,66 @@ def jump_point(text):
 def switch_frame(frame):
     clear_frame()
     if frame == "Mainmenu":
-        switch_sidebar(frame)
-        
+        pass
+    
     elif frame == "Play":
         create_label(mainframe, ("test"))
         
     elif frame == "LVL-Selector":
-        create_label(mainframe, ("", 100), "y", True, "#1b1b1b")
-        lvl_padding = create_label(mainframe, "", "y", False)
-        lvl_box = create_label(lvl_padding, ("", 100), "x", True, "#1b1b1b")
-        create_button(lvl_box, ("LVL-1", 20), "left", "x", False, "#252526")
-        create_button(lvl_box, ("LVL-2", 20), "left", "x", False, "#252526")
-        create_button(lvl_box, ("LVL-3", 20), "left", "x", False, "#252526")
-        create_button(lvl_box, ("LVL-4", 20), "left", "x", False, "#252526")
-        create_button(lvl_box, ("LVL-5", 20), "left", "x", False, "#252526")
-        create_label(mainframe, ("", 100), "y", True, "#1b1b1b")
+        LVL_Select_scrn = create_row(mainframe, "top", "both", True, 5, C2)
+        
+        lvl_box = create_row(LVL_Select_scrn, "left", "both", True, 5, C3)
+        create_label(lvl_box, "", "left", "x", True, C3)
+        create_button(lvl_box, ("LVL-1", 20), "left", "x", False, C3)
+        create_button(lvl_box, ("LVL-2", 20), "left", "x", False, C3)
+        create_button(lvl_box, ("LVL-3", 20), "left", "x", False, C3)
+        create_button(lvl_box, ("LVL-4", 20), "left", "x", False, C3)
+        create_button(lvl_box, ("LVL-5", 20), "left", "x", False, C3)
+        create_label(lvl_box, "", "left", "x", True, C3)
         
     elif frame == "Settings":
-        create_label(mainframe, "settings")
+        #Settings_container = create_label(mainframe, "", "both", True, C3)
+        #Settings_section1 = create_label(Settings_container, "", "both", True, C3)
+        row_1, row_2 = create_row(mainframe), create_row(mainframe)
+        create_label(row_1, "testtest")
+        create_label(row_2, "testtest")
+        
+    switch_side_bar(frame)
 
-def switch_sidebar(frame):
-    if frame == "":
-        padding = create_label(mainframe, "", "x", True)
-        create_label(padding, "", "none", True)
-        create_label(padding, ("Pac-man", 50), "none", True)
-        create_label(padding, "", "none", True)
-        menubar = create_label(mainframe, "test", "x", expand=True)
-        create_button(menubar, ("Play", 20), "left", "x", True)
-        create_button(menubar, ("LVL-Selector", 20), "left", "x", True)
-        create_button(menubar, ("Settings", 20), "left", "x", True)        
+def switch_side_bar(frame):
+    if frame == "Mainmenu":
+        create_label(side_bar, ("Pac-man", 50), "top", "x", True, C3)
+        
+        menu_bar = create_row(side_bar, fill="x", expand=False, bg=C3)
+        create_button(menu_bar, ("Play", 20), "top", "x", True, C3)
+        create_button(menu_bar, ("LVL-Selector", 20), "top", "x", True, C3)
+        create_button(menu_bar, ("Settings", 20), "top", "x", True, C3)
+
+        create_label(side_bar, "", "top", "x", True, C2)
+
+        Quit_border = create_row(side_bar, "bottom", "x", False, 5, C3)
+        create_button(Quit_border, ("Quit", 20), "bottom", expand=False, bg=C3)
+
+    else:
+        create_label(side_bar, ("Pac-man", 50), "top", "x", True, C3)
+        
+        menu_bar = create_row(side_bar, fill="x", expand=False, bg=C3)
+        create_button(menu_bar, ("Play", 20), "top", "x", True, C3)
+        create_button(menu_bar, ("LVL-Selector", 20), "top", "x", True, C3)
+        create_button(menu_bar, ("Settings", 20), "top", "x", True, C3)
+
+        create_label(side_bar, "", "top", "x", True, C2)
+
+        Quit_border = create_row(side_bar, "bottom", "x", False, 5, C3)
+        create_button(Quit_border, ("Back", 20), "bottom", expand=False, bg=C3)
 
 def clear_frame():
     for item in mainframe.slaves():
         item.destroy()
-    for item in sidebar.slaves():
+    for item in side_bar.slaves():
         item.destroy()
 
-#switch_frame("Mainmenu")
-create_label(sidebar, "test")
+switch_frame("Mainmenu")
 
 root.bind("<Escape>", quit) #sys.exit
 #root.iconbitmap("blume.ico")
