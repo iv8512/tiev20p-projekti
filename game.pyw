@@ -9,6 +9,15 @@ START
 
 """
 
+class InfoClass:
+    def __init__(self):
+        self.background = "frame, side, fill, expand, border=5, cursor=False"
+        self.label = "frame, text, fill=\"both\", expand=True, bg=\"#323233\""
+        self.button = "frame, text, side=\"top\", fill=\"both\", expand=True"
+        self.toggle = "frame, text, side=\"top\", fill=\"both\", expand=True"
+        self.info = "background, label, button, toggle, info"
+info = InfoClass()
+
 def create_background(frame, side, fill, expand, border=5, cursor=False):
     if cursor:
         background = Frame(frame, borderwidth=border, cursor="hand2")
@@ -149,7 +158,7 @@ def jump_point(text):
 
 def switch_frame(frame):
     clear_frame()
-    if frame == "Mainmenu"
+    if frame == "Mainmenu":
         create_label(padding, ("Pac-man", 50), fill="none", expand=True)
         create_button(menubar, ("Play", 20), "left", "x", True)
         create_button(menubar, ("LVL-Selector", 20), "left", "x", True)
