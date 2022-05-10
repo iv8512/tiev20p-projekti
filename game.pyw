@@ -25,6 +25,16 @@ class InfoClass:
                 else:
                     pass
         return text
+
+    def colours(self):
+        for category in info_file["Colours"]:
+            print(category)
+            if type(info_file["Colours"][category]) == dict:
+                for name, colour in info_file["Colours"][category].items():
+                    print(f"  {name} {colour}")
+            else:
+                for colour in info_file["Colours"][category]:
+                    print(f"  {colour}")
         
 info = InfoClass()
 
