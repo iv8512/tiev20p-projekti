@@ -145,11 +145,23 @@ def jump_point(text):
             pass
         case _:
             print(text)
+            
 
-create_label(padding, ("Pac-man", 50), fill="none", expand=True)
-create_button(menubar, ("Play", 20), "left", "x", True)
-create_button(menubar, ("LVL-Selector", 20), "left", "x", True)
-create_button(menubar, ("Settings", 20), "left", "x", True)
+def switch_frame(frame):
+    clear_frame()
+    if frame == "Mainmenu"
+        create_label(padding, ("Pac-man", 50), fill="none", expand=True)
+        create_button(menubar, ("Play", 20), "left", "x", True)
+        create_button(menubar, ("LVL-Selector", 20), "left", "x", True)
+        create_button(menubar, ("Settings", 20), "left", "x", True)
+    elif frame == "":
+        pass
+
+def clear_frame():
+    for item in mainframe.slaves():
+        item.destroy()
+
+switch_frame("Mainmenu")
 
 root.title("Pac-man")
 root.geometry("1000x600+100+100")
