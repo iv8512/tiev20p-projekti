@@ -152,9 +152,12 @@ END
 """
 
 mainframe = Frame(root)
-mainframe.pack(side="top", fill="both", expand=True)
+mainframe.pack(side="left", fill="both", expand=True)
 mainframe.config(bg="#1B1B1B")
 
+sidebar = Frame(root, width=400)
+sidebar.pack(side="left", fill="both")
+sidebar.pack_propagate(0)
 
 def jump_point(text):
     match text.split():
@@ -167,7 +170,7 @@ def jump_point(text):
 def switch_frame(frame):
     clear_frame()
     if frame == "Mainmenu":
-        pass
+        switch_sidebar(frame)
         
     elif frame == "Play":
         create_label(mainframe, ("test"))
@@ -187,6 +190,7 @@ def switch_frame(frame):
         create_label(mainframe, "settings")
 
 def switch_sidebar(frame):
+    if frame == "":
         padding = create_label(mainframe, "", "x", True)
         create_label(padding, "", "none", True)
         create_label(padding, ("Pac-man", 50), "none", True)
@@ -199,10 +203,15 @@ def switch_sidebar(frame):
 def clear_frame():
     for item in mainframe.slaves():
         item.destroy()
+    for item in sidebar.slaves():
+        item.destroy()
 
-switch_frame("Mainmenu")
+#switch_frame("Mainmenu")
+create_label(sidebar, "test")
 
+root.bind("<Escape>", quit) #sys.exit
 root.title("Pac-man")
-root.geometry("1000x600+100+100")
-root.minsize(250, 200)
+#root.geometry("1000x600+100+100")
+#root.minsize(250, 200)
+root.attributes('-fullscreen', True)
 root.mainloop()
