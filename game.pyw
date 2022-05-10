@@ -1,22 +1,38 @@
 from tkinter import *
+import json
 #from interactables import *
 
 root = Tk()
+
+with open("info.json") as data:
+    info_file = json.load(data)
+
+class InfoClass:
+    
+    def __init__(self):
+        self.background = self.text_handler("background")
+        self.label = self.text_handler("label")
+        self.button = self.text_handler("button")
+        self.toggle = self.text_handler("toggle")
+        self.info = self.text_handler("info")
+        
+    def text_handler(self, item):
+        text = info_file["InfoClass"][item]
+        if ":" in text:
+            for marker in text.split(":"):
+                if marker in info_file["InfoClass"]:
+                    text = text.replace(f":{marker}:", info_file["InfoClass"][marker])
+                else:
+                    pass
+        return text
+        
+info = InfoClass()
 
 """
 
 START
 
 """
-
-class InfoClass:
-    def __init__(self):
-        self.background = "frame, side, fill, expand, border=5, cursor=False"
-        self.label = "frame, text, fill=\"both\", expand=True, bg=\"#323233\""
-        self.button = "frame, text, side=\"top\", fill=\"both\", expand=True"
-        self.toggle = "frame, text, side=\"top\", fill=\"both\", expand=True"
-        self.info = "background, label, button, toggle, info"
-info = InfoClass()
 
 def create_background(frame, side, fill, expand, border=5, cursor=False):
     if cursor:

@@ -2,10 +2,11 @@
     "InfoClass": {
         "background": "frame, side, fill, expand, border=5, cursor=False",
         "label": "frame, text/:text_handler:, fill=\"both\", expand=True, bg=\"#323233\"",
-        "button": "frame, text/, side=\"top\", fill=\"both\", expand=True",
-        "toggle": "frame, text/, side=\"top\", fill=\"both\", expand=True",
+        "button": "frame, text/:text_handler:, :test:, bg=\"#323233\"",
+        "toggle": "frame, text/:text_handler:, :test:",
         "info": "background, label, button, toggle, info",
-        "text_handler": "(text, size=10, state=NORMAL)"
+        "text_handler": "(text, size=10, state=NORMAL)",
+        "test": "side=\"top\", fill=\"both\", expand=True"
     },
     "Colours": {
         "Base Colours": {
