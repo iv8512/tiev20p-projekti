@@ -17,22 +17,22 @@ def create_background(frame, side, fill, expand, border=5, cursor=False):
     return background
 
 def text_handler(text):
-    #JL6079
+    # JL6079
     """
     checks if ´text´is tuple
     checks how many items are in ´text´
     """
-    #Two items
+    # Two items
     if type(text) == tuple and len(text) == 2:
-        #checks if 2nd item is an integer
+        # checks if 2nd item is an integer
         if type(text[1]) == int:
             text, size, state = text[0], text[1], NORMAL
         else:
             text, size, state = text[0], 10, text[1]
-    #Three items
+    # Three items
     elif type(text) == tuple and len(text) == 3:
         text, size, state = text[0], text[1], text[2]
-    #One iem    
+    # One item    
     else:
         text, size, state = text, 10, NORMAL
     return text, size, state
