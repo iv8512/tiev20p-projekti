@@ -1,9 +1,18 @@
 from tkinter import *
 from colours import *
-import json
+import json, math
 #from interactables import *
 
 root = Tk()
+
+sidebar = Frame(root, width=400)
+sidebar.pack(side="left", fill="both")
+sidebar.config(bg=C2)
+sidebar.pack_propagate(0)
+
+mainframe = Frame(root, borderwidth=10)
+mainframe.pack(side="left", fill="both", expand=True)
+mainframe.config(bg=C1)
 
 with open("info.json") as data:
     info_file = json.load(data)
@@ -39,19 +48,13 @@ class InfoClass:
         
 info = InfoClass()
 
-"""
-
-START
-
-"""
-
-def create_background(frame, side, fill, expand, border=5, cursor=False):
+def create_background(frame, side, fill, expand, bg, border=5, cursor=False):
     if cursor:
         background = Frame(frame, borderwidth=border, cursor="hand2")
     else:
         background = Frame(frame, borderwidth=border)
     background.pack(side=side, fill=fill, expand=expand)
-    background.config(bg=C3)
+    background.config(bg=bg)
     return background
 
 def text_handler(text):
@@ -86,7 +89,7 @@ def create_label(frame, text, side="top", fill="both", expand=True, bg=C3):
 def create_button(frame, text, side="top", fill="both", expand=True, bg=C3):
     # Other
     text, size, state = text_handler(text)
-    background = create_background(frame, side, fill, expand)
+    background = create_background(frame, side, fill, expand, bg)
     # Main
     button = Label(background, text=text, state=state, cursor="hand2")
     button.pack(side=side, fill="both", expand=True)
@@ -95,7 +98,7 @@ def create_button(frame, text, side="top", fill="both", expand=True, bg=C3):
     button.bind("<Button-1>", lambda event: jump_point(text))
     # Hover effect
     button.bind("<Enter>", lambda event: background.config(bg=C4))
-    button.bind("<Leave>", lambda event: background.config(bg=C3))
+    button.bind("<Leave>", lambda event: background.config(bg=bg))
     return button
 
 def create_toggle(frame, text, side="top", fill="both", expand=True):
@@ -156,11 +159,100 @@ def toggle_handler(text):
 images = {}
 toggles = {}
 
-def create_row(frame, side="top", fill="both", expand=True, border=5, bg=C2):
-    frame = Frame(frame, borderwidth=border)
-    frame.pack(side=side, fill=fill, expand=expand)
+def create_row(bg="#323233", borderwidth=0):
+    frame = Frame(mainframe, borderwidth=borderwidth)
+    frame.pack(side="top", fill="both", expand=True)
     frame.config(bg=bg)
     return frame
+
+def create_square(row, i, side="left"):
+    frame1 = Frame(row, borderwidth=5)
+    frame1.pack(side=side, fill="both", expand=True)
+    frame1.config(bg="#252526")
+    frame2 = Frame(frame1)
+    frame2.pack(side=side, fill="both", expand=True)
+    frame2.config(bg="#323233")
+    create_label(frame2, i)
+
+def create_blocklist():
+    geometry = root.winfo_geometry()
+    print(geometry)
+    width = round(mainframe.winfo_width()/250)
+    height = round(mainframe.winfo_height()/250)
+    print(mainframe.winfo_width(), mainframe.winfo_height())
+    for row_i in range(height):
+        row = create_row()
+        for column_i in range(width):
+            create_square(row, f"{column_i}/{row_i}")
+
+class Blocklist:
+    
+    def __init__(self, frame):
+        self.columns = round(frame.winfo_width()/250)
+        self.rows = round(frame.winfo_height()/250)
+        self.block_states = {}
+        self.create_grid(frame, 25)
+
+    def create_grid(self, frame, blocks):
+        full_rows = math.floor(blocks/self.columns)
+        extra_blocks = blocks % self.columns
+        print(full_rows, extra_blocks)
+        include_plus_button = True
+        for column_id in range(self.columns):
+            column = self.create_column(frame)
+            # Calculate blocks
+            plus_button = False
+            blocks = full_rows
+            if column_id < extra_blocks:
+                blocks += 1
+            elif include_plus_button:
+                plus_button = True
+                include_plus_button = False
+            # Create blocks
+            self.create_blocks(column, column_id, blocks, plus_button)
+
+    def create_column(self, frame):
+        column = Frame(frame, borderwidth=0)
+        column.pack(side="left", fill="both", expand=True)
+        column.config(bg=C2)
+        return column
+
+    def create_blocks(self, column, column_id, active_blocks, plus_button):
+        for row_id in range(self.rows):
+            if not row_id >= active_blocks:
+                self.create_block(column, f"{column_id}/{row_id}", True)
+            elif plus_button:
+                self.create_block(column, "+", True)
+                plus_button = False
+            else:
+                self.create_block(column, f"{column_id}/{row_id}", False)
+
+    def create_block(self, column, block_id, state):
+        self.block_states[block_id] = state
+        # Outer
+        block_base = Frame(column, borderwidth=5)
+        block_base.pack(side="top", fill="both", expand=True)
+        block_base.config(bg="#252526")
+        # Inner
+        block = Frame(block_base)
+        block.pack(side="top", fill="both", expand=True)
+        if state:
+            colour = C3
+        else:
+            colour = C1
+        block.config(bg=colour)
+        create_button(block, block_id, "bottom", "both", False, colour)
+
+    def add_button(self, frame):
+        create_label(frame, "test")
+
+    def add_block(self, frame):
+        pass
+
+    def toggle_colour(self, x, y):
+        column = mainframe.slaves()[x]
+        block = column.slaves()[y]
+        block.config(bg="darkred")
 
 def multiple(obj_type, amount, frame=True):
     if frame:
@@ -172,25 +264,25 @@ def multiple(obj_type, amount, frame=True):
 
 """
 
-END
+START
 
 """
 
-mainframe = Frame(root, borderwidth=10)
-mainframe.pack(side="left", fill="both", expand=True)
-mainframe.config(bg=C1)
-
-sidebar = Frame(root, width=400)
-sidebar.pack(side="left", fill="both")
-sidebar.config(bg=C2)
-sidebar.pack_propagate(0)
+def startup():
+    switch_frame("Mainmenu")
 
 def jump_point(text):
+    text = text.replace("/", " id ")
     match text.split():
+    #match re.split(" |/", text):
         case ["Quit"]:
             quit()
         case ["Back"]:
             switch_frame("Mainmenu")
+        case [x, "id", y]:
+            print(f"{x}/{y}")
+            x, y = int(x), int(y)
+            test_list.toggle_colour(x, y)
         case _:
             print(text)
             switch_frame(text)
@@ -198,28 +290,16 @@ def jump_point(text):
 def switch_frame(frame):
     clear_frame(mainframe)
     if frame == "Mainmenu":
-        switch_sidebar(frame)
+        #create_blocklist()
+        global test_list
+        test_list = Blocklist(mainframe)
+        #create_row(mainframe)
+        #switch_sidebar(frame)
     elif frame == "Play":
         create_label(mainframe, ("test"))
         
     elif frame == "LVL-Selector":
-        LVL_Select_scrn = create_row(mainframe, "top", "both", True, 5, C2)
-        
-        lvl_box = create_row(LVL_Select_scrn, "left", "both", True, 5, C3)
-        create_label(lvl_box, "", "left", "x", True, C3)
-        create_button(lvl_box, ("LVL-1", 20), "left", "x", False, C3)
-        create_button(lvl_box, ("LVL-2", 20), "left", "x", False, C3)
-        create_button(lvl_box, ("LVL-3", 20), "left", "x", False, C3)
-        create_button(lvl_box, ("LVL-4", 20), "left", "x", False, C3)
-        create_button(lvl_box, ("LVL-5", 20), "left", "x", False, C3)
-        create_label(lvl_box, "", "left", "x", True, C3)
-        
-    elif frame == "Settings":
-        #Settings_container = create_label(mainframe, "", "both", True, C3)
-        #Settings_section1 = create_label(Settings_container, "", "both", True, C3)
-        row_1, row_2 = create_row(mainframe), create_row(mainframe)
-        create_label(row_1, "testtest")
-        create_label(row_2, "testtest")
+        pass
 
 def switch_sidebar(frame):
     clear_frame(sidebar)
@@ -254,12 +334,11 @@ def clear_frame(*frames):
         for item in frame.slaves():
             item.destroy()
 
-switch_frame("Mainmenu")
-
 root.bind("<Escape>", quit) #sys.exit
-#root.iconbitmap("blume.ico")
-root.title("Pac-man")
+root.iconbitmap("icons/blume.ico")
+root.title("Pac-man LVL-Editor")
 #root.geometry("1000x600+100+100")
 #root.minsize(250, 200)
 root.attributes('-fullscreen', True)
+root.after(6, startup)
 root.mainloop()
