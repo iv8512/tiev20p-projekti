@@ -188,6 +188,7 @@ def create_blocklist():
 class Blocklist:
     
     def __init__(self, frame, items):
+        self.frame = frame
         self.columns = round(frame.winfo_width()/250)
         self.rows = round(frame.winfo_height()/250)
         self.block_states = {}
@@ -283,6 +284,14 @@ def load_maps():
         pass
     return files
 
+def new_map():
+    map_id = len(load_maps()) + 1
+    print(f"creating new map file level_{map_id}.json")
+    
+    with open(f"maps/level_{map_id}.json", "w") as file:
+        json.dump({"Level": map_id}, file, indent=4)
+    
+
 """
 
 START
@@ -305,6 +314,9 @@ def jump_point(text):
             x, y = int(x), int(y)
             test_list.toggle_colour(x, y)
         case ["test"]:
+            test_list.refresh()
+        case ["+"]:
+            new_map()
             test_list.refresh()
         case _:
             print(text)
