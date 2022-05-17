@@ -1,6 +1,8 @@
 from tkinter import *
 from colours import *
 import json, math, os
+from PIL import ImageTk, Image
+"""pip install pillow"""
 #from interactables import *
 
 root = Tk()
@@ -104,7 +106,7 @@ def create_button(frame, text, side="top", fill="both", expand=True, bg=C3):
 def create_toggle(frame, text, side="top", fill="both", expand=True):
     # Other
     text, size, state = text_handler(text)
-    background = create_background(frame, side, fill, expand)
+    background = create_background(frame, side, fill, expand, C3)
     image_label = create_toggle_image(background, text, expand)
     # Main
     toggle = Label(background, text=text, state=state, cursor="hand2")
@@ -118,16 +120,15 @@ def create_toggle(frame, text, side="top", fill="both", expand=True):
     return toggle
 
 def create_toggle_image(background, text, expand, file="Toggle On.png"):
-    images = image_handler(text, file)
     if expand:
-        frame = create_background(background, "right", "both", False, 0, True)
+        frame = create_background(background, "right", "both", False, C3, 0, True)
         frame.bind("<Button-1>", lambda event: jump_point(f"Toggle {text}", label))
         frame.bind("<Enter>", lambda event: background.config(bg=C4))
         frame.bind("<Leave>", lambda event: background.config(bg=C3))
     else:
         frame = background
     # Main
-    label = Label(frame, image=images[text], cursor="hand2")
+    label = Label(frame, image=image_handler(text, file), cursor="hand2")
     label.pack(side="right", expand=False)
     label.config(bg=C3)
     # Binds
@@ -136,17 +137,15 @@ def create_toggle_image(background, text, expand, file="Toggle On.png"):
     label.bind("<Leave>", lambda event: background.config(bg=C3))
     return label
 
-def image_handler(text, file):
-    image = get_image(file)
+def image_handler(text, file, size=40, rotation=0):
+    # JL6079
+    image = Image.open(file).convert("RGBA")
+    image = image.resize((size, size), Image.Resampling.LANCZOS)
+    image = image.rotate(rotation)
+    image = ImageTk.PhotoImage(image)
     global images
     images[text] = image
-    return images
-
-def get_image(file):
-    img = Image.open(file).convert("RGBA")
-    img = img.resize((40, 40), Image.ANTIALIAS)
-    img = ImageTk.PhotoImage(img)
-    return img
+    return images[text]
 
 def toggle_handler(text):
     global toggles
@@ -221,42 +220,47 @@ class Blocklist:
     def create_blocks(self, column, column_id, active_blocks, plus_button):
         for row_id in range(self.rows):
             if not row_id >= active_blocks:
-                self.create_block(column, f"{column_id}/{row_id}")
+                self.create_true(column, f"{column_id}/{row_id}")
                 self.block_states[f"{column_id}/{row_id}"] = True
             elif plus_button:
-                self.create_block(column, "+")
+                self.plus_button(column, "+")
                 self.block_states["+"] = True
                 plus_button = False
             else:
-                self.create_empty(column, f"{column_id}/{row_id}")
+                self.create_false(column, f"{column_id}/{row_id}")
                 self.block_states[f"{column_id}/{row_id}"] = False
 
-    def create_empty(self, column, block_id):
-        # Outer
-        block_base = Frame(column, borderwidth=5)
-        block_base.pack(side="top", fill="both", expand=True)
-        block_base.config(bg=C1)
-        # Inner
-        block = Frame(block_base)
-        block.pack(side="top", fill="both", expand=True)
-        block.config(bg=C1)
-        block.pack_propagate(0)
+    def create_false(self, column, block_id):
+        # Create a dark block
+        block = self.create_block(column, C1, C1)
         create_label(block, block_id, bg=C1, fg="lightgray")
 
-    def create_block(self, column, block_id):
+    def create_true(self, column, block_id):
+        # Create a light block
+        block = self.create_block(column)
+        create_button(block, block_id, "bottom", "both", False)
+
+    def plus_button(self, column, block_id):
+        block = self.create_block(column, C1, C1)
+        
+        image = image_handler("+", "icons/Disabled.png", 125, 45)
+        label = Label(block, image=images["+"])#, cursor="hand2")
+        label.pack(side="top", expand=True)
+        label.config(bg=C1)
+        
+        #create_button(block, "0", "bottom", "both", False)
+
+    def create_block(self, column, bg=C2, fg=C3):
         # Outer
         block_base = Frame(column, borderwidth=5)
         block_base.pack(side="top", fill="both", expand=True)
-        block_base.config(bg="#252526")
+        block_base.config(bg=bg)
         # Inner
         block = Frame(block_base)
         block.pack(side="top", fill="both", expand=True)
-        block.config(bg=C3)
+        block.config(bg=fg)
         block.pack_propagate(0)
-        create_button(block, block_id, "bottom", "both", False)
-
-    def add_button(self, frame):
-        create_label(frame, "test")
+        return block
 
     def add_block(self, frame):
         pass
@@ -284,14 +288,6 @@ def load_maps():
         pass
     return files
 
-def new_map():
-    map_id = len(load_maps()) + 1
-    print(f"creating new map file level_{map_id}.json")
-    
-    with open(f"maps/level_{map_id}.json", "w") as file:
-        json.dump({"Level": map_id}, file, indent=4)
-    
-
 """
 
 START
@@ -301,7 +297,7 @@ START
 def startup():
     switch_frame("Mainmenu")
 
-def jump_point(text):
+def jump_point(text, toggle=False):
     text = text.replace("/", " id ")
     match text.split():
     #match re.split(" |/", text):
@@ -313,10 +309,15 @@ def jump_point(text):
             print(f"{x}/{y}")
             x, y = int(x), int(y)
             test_list.toggle_colour(x, y)
+        case ["Toggle", *text]:
+            text = " ".join(text)
+            state = toggle_handler(text)
+            if state:
+                image = image_handler(text, "Toggle On.png")
+            else:
+                image = image_handler(text, "Toggle Off.png")
+            toggle.configure(image=image)
         case ["test"]:
-            test_list.refresh()
-        case ["+"]:
-            new_map()
             test_list.refresh()
         case _:
             print(text)
@@ -330,7 +331,10 @@ def switch_frame(frame):
         test_list = Blocklist(mainframe, load_maps())
         #create_row(mainframe)
         #switch_sidebar(frame)
+
+        create_toggle(sidebar, "test1", expand=False)
         create_button(sidebar, "test")
+        create_toggle(sidebar, "test2")
     elif frame == "Play":
         create_label(mainframe, ("test"))
         
