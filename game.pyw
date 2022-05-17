@@ -169,6 +169,24 @@ def multiple(obj_type, amount, frame=True):
         items.append(obj_type(frame))
     return items
 
+def create_square(row, i, side="left", border=5):
+    frame1 = Frame(row, borderwidth=border)
+    frame1.pack(side=side, fill="both", expand=True)
+    frame1.config(bg=C2)
+    frame2 = Frame(frame1)
+    frame2.pack(side=side, fill="both", expand=True)
+    frame2.config(bg=C3)
+    create_label(frame2, i)
+
+def create_blocklist(frame):
+    geometry = root.winfo_geometry()
+    print(geometry)
+    print(frame.winfo_width(), frame.winfo_height())
+    for row_i in range(11):
+        row = create_row(frame, border=0)
+        for column_i in range(15):
+            create_square(row, f"{column_i}/{row_i}", border=5)
+
 """
 
 END
@@ -207,7 +225,7 @@ def switch_frame(frame):
     if frame == "Mainmenu":
         switch_sidebar(frame)
     elif frame == "Play":
-        create_label(mainframe, ("test"))
+        create_blocklist(mainframe)
         
     elif frame == "LVL-Selector":
         LVL_Select_scrn = create_row(mainframe, "top", "both", True, 5, C2)
