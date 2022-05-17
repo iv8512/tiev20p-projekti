@@ -139,9 +139,8 @@ def create_toggle_image(background, text, expand, file="Toggle On.png"):
 
 def image_handler(text, file, size=40, rotation=0):
     # JL6079
-    image = Image.open(file).convert("RGBA")
+    image = Image.open(file).convert("RGBA").rotate(rotation)
     image = image.resize((size, size), Image.Resampling.LANCZOS)
-    image = image.rotate(rotation)
     image = ImageTk.PhotoImage(image)
     global images
     images[text] = image
@@ -188,6 +187,7 @@ class Blocklist:
     
     def __init__(self, frame, items):
         self.frame = frame
+        self.items = items
         self.columns = round(frame.winfo_width()/250)
         self.rows = round(frame.winfo_height()/250)
         self.block_states = {}
@@ -220,7 +220,8 @@ class Blocklist:
     def create_blocks(self, column, column_id, active_blocks, plus_button):
         for row_id in range(self.rows):
             if not row_id >= active_blocks:
-                self.create_true(column, f"{column_id}/{row_id}")
+                ordinal_num = self.columns * row_id + column_id
+                self.create_true(column, f"{column_id}/{row_id}", ordinal_num)
                 self.block_states[f"{column_id}/{row_id}"] = True
             elif plus_button:
                 self.plus_button(column, "+")
@@ -235,18 +236,21 @@ class Blocklist:
         block = self.create_block(column, C1, C1)
         create_label(block, block_id, bg=C1, fg="lightgray")
 
-    def create_true(self, column, block_id):
+    def create_true(self, column, block_id, ordinal_num):
         # Create a light block
         block = self.create_block(column)
+        create_label(block, self.items[ordinal_num])
+        create_label(block, ordinal_num)
         create_button(block, block_id, "bottom", "both", False)
 
     def plus_button(self, column, block_id):
         block = self.create_block(column, C1, C1)
         
         image = image_handler("+", "icons/Disabled.png", 125, 45)
-        label = Label(block, image=images["+"])#, cursor="hand2")
+        label = Label(block, image=images["+"], cursor="hand2")
         label.pack(side="top", expand=True)
         label.config(bg=C1)
+        label.bind("<Button-1>", lambda event: self.plus_function())
         
         #create_button(block, "0", "bottom", "both", False)
 
@@ -262,8 +266,9 @@ class Blocklist:
         block.pack_propagate(0)
         return block
 
-    def add_block(self, frame):
-        pass
+    def plus_function(self):
+        new_map()
+        self.refresh()
 
     def toggle_colour(self, x, y):
         column = mainframe.slaves()[x]
@@ -284,9 +289,22 @@ def multiple(obj_type, amount, frame=True):
     return items
 
 def load_maps():
+    maps = []
     for path, folders, files in os.walk("maps"):
-        pass
-    return files
+        for i, file in enumerate(files):
+            print(file)
+            with open(f"maps/{file}") as data:
+                data = json.load(data)
+            maps.append(file)
+    maps.sort(key=lambda f: int(''.join(filter(str.isdigit, f))))
+    return maps
+
+def new_map():
+    map_id = len(load_maps()) + 1
+    print(f"creating new map file level_{map_id}.json")
+    
+    with open(f"maps/level_{map_id}.json", "w") as file:
+        json.dump({"Level": map_id}, file, indent=4)
 
 """
 
