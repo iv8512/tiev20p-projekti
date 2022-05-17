@@ -1,6 +1,6 @@
 from tkinter import *
 from colours import *
-import json, math
+import json, math, os
 #from interactables import *
 
 root = Tk()
@@ -78,11 +78,11 @@ def text_handler(text):
         text, size, state = text, 10, NORMAL
     return text, size, state
 
-def create_label(frame, text, side="top", fill="both", expand=True, bg=C3):
+def create_label(frame, text, side="top", fill="both", expand=True, bg=C3, fg="white"):
     text, size, state = text_handler(text)
     label = Label(frame, text=text, state=state)
     label.pack(side=side, fill=fill, expand=expand)
-    label.config(fg="white", bg=bg)
+    label.config(fg=fg, bg=bg)
     label.config(font=("TkDefaultFont", size))
     return label
 
@@ -187,11 +187,11 @@ def create_blocklist():
 
 class Blocklist:
     
-    def __init__(self, frame):
+    def __init__(self, frame, items):
         self.columns = round(frame.winfo_width()/250)
         self.rows = round(frame.winfo_height()/250)
         self.block_states = {}
-        self.create_grid(frame, 25)
+        self.create_grid(frame, len(items))
 
     def create_grid(self, frame, blocks):
         full_rows = math.floor(blocks/self.columns)
@@ -220,15 +220,29 @@ class Blocklist:
     def create_blocks(self, column, column_id, active_blocks, plus_button):
         for row_id in range(self.rows):
             if not row_id >= active_blocks:
-                self.create_block(column, f"{column_id}/{row_id}", True)
+                self.create_block(column, f"{column_id}/{row_id}")
+                self.block_states[f"{column_id}/{row_id}"] = True
             elif plus_button:
-                self.create_block(column, "+", True)
+                self.create_block(column, "+")
+                self.block_states["+"] = True
                 plus_button = False
             else:
-                self.create_block(column, f"{column_id}/{row_id}", False)
+                self.create_empty(column, f"{column_id}/{row_id}")
+                self.block_states[f"{column_id}/{row_id}"] = False
 
-    def create_block(self, column, block_id, state):
-        self.block_states[block_id] = state
+    def create_empty(self, column, block_id):
+        # Outer
+        block_base = Frame(column, borderwidth=5)
+        block_base.pack(side="top", fill="both", expand=True)
+        block_base.config(bg=C1)
+        # Inner
+        block = Frame(block_base)
+        block.pack(side="top", fill="both", expand=True)
+        block.config(bg=C1)
+        block.pack_propagate(0)
+        create_label(block, block_id, bg=C1, fg="lightgray")
+
+    def create_block(self, column, block_id):
         # Outer
         block_base = Frame(column, borderwidth=5)
         block_base.pack(side="top", fill="both", expand=True)
@@ -236,12 +250,9 @@ class Blocklist:
         # Inner
         block = Frame(block_base)
         block.pack(side="top", fill="both", expand=True)
-        if state:
-            colour = C3
-        else:
-            colour = C1
-        block.config(bg=colour)
-        create_button(block, block_id, "bottom", "both", False, colour)
+        block.config(bg=C3)
+        block.pack_propagate(0)
+        create_button(block, block_id, "bottom", "both", False)
 
     def add_button(self, frame):
         create_label(frame, "test")
@@ -261,6 +272,11 @@ def multiple(obj_type, amount, frame=True):
     for i in range(amount):
         items.append(obj_type(frame))
     return items
+
+def load_maps():
+    for path, folders, files in os.walk("maps"):
+        pass
+    return files
 
 """
 
@@ -292,7 +308,7 @@ def switch_frame(frame):
     if frame == "Mainmenu":
         #create_blocklist()
         global test_list
-        test_list = Blocklist(mainframe)
+        test_list = Blocklist(mainframe, load_maps())
         #create_row(mainframe)
         #switch_sidebar(frame)
     elif frame == "Play":
@@ -303,31 +319,6 @@ def switch_frame(frame):
 
 def switch_sidebar(frame):
     clear_frame(sidebar)
-    if frame == "Mainmenu":
-        create_label(sidebar, ("Pac-man", 50), "top", "x", True, C3)
-        
-        menu_bar = create_row(sidebar, fill="x", expand=False, bg=C3)
-        create_button(menu_bar, ("Play", 20), "top", "x", True, C3)
-        create_button(menu_bar, ("LVL-Selector", 20), "top", "x", True, C3)
-        create_button(menu_bar, ("Settings", 20), "top", "x", True, C3)
-
-        create_label(sidebar, "", "top", "x", True, C2)
-
-        Quit_border = create_row(sidebar, "bottom", "x", False, 5, C3)
-        create_button(Quit_border, ("Quit", 20), "bottom", expand=False, bg=C3)
-
-    else:
-        create_label(sidebar, ("Pac-man", 50), "top", "x", True, C3)
-        
-        menu_bar = create_row(sidebar, fill="x", expand=False, bg=C3)
-        create_button(menu_bar, ("Play", 20), "top", "x", True, C3)
-        create_button(menu_bar, ("LVL-Selector", 20), "top", "x", True, C3)
-        create_button(menu_bar, ("Settings", 20), "top", "x", True, C3)
-
-        create_label(sidebar, "", "top", "x", True, C2)
-
-        Quit_border = create_row(sidebar, "bottom", "x", False, 5, C3)
-        create_button(Quit_border, ("Back", 20), "bottom", expand=False, bg=C3)
 
 def clear_frame(*frames):
     for frame in frames:
