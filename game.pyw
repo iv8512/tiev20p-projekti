@@ -1,6 +1,7 @@
 from tkinter import *
 from colours import *
 import json
+from PIL import ImageTk, Image
 #from interactables import *
 
 root = Tk()
@@ -115,7 +116,7 @@ def create_toggle(frame, text, side="top", fill="both", expand=True):
     return toggle
 
 def create_toggle_image(background, text, expand, file="Toggle On.png"):
-    images = image_handler(text, file)
+    image = image_handler(text, file)
     if expand:
         frame = create_background(background, "right", "both", False, 0, True)
         frame.bind("<Button-1>", lambda event: jump_point(f"Toggle {text}", label))
@@ -124,7 +125,7 @@ def create_toggle_image(background, text, expand, file="Toggle On.png"):
     else:
         frame = background
     # Main
-    label = Label(frame, image=images[text], cursor="hand2")
+    label = Label(frame, image=image, cursor="hand2")
     label.pack(side="right", expand=False)
     label.config(bg=C3)
     # Binds
@@ -133,17 +134,15 @@ def create_toggle_image(background, text, expand, file="Toggle On.png"):
     label.bind("<Leave>", lambda event: background.config(bg=C3))
     return label
 
-def image_handler(text, file):
-    image = get_image(file)
+def image_handler(text, file, size=40, rotation=0):
+    # JL6079
+    image = Image.open(file).convert("RGBA")
+    image = image.resize((size, size), Image.Resampling.LANCZOS)
+    image = image.rotate(rotation)
+    image = ImageTk.PhotoImage(image)
     global images
     images[text] = image
-    return images
-
-def get_image(file):
-    img = Image.open(file).convert("RGBA")
-    img = img.resize((40, 40), Image.ANTIALIAS)
-    img = ImageTk.PhotoImage(img)
-    return img
+    return images[text]
 
 def toggle_handler(text):
     global toggles
@@ -185,12 +184,20 @@ sidebar.pack(side="left", fill="both")
 sidebar.config(bg=C2)
 sidebar.pack_propagate(0)
 
-def jump_point(text):
+def jump_point(text, toggle=False):
     match text.split():
         case ["Quit"]:
             quit()
         case ["Back"]:
             switch_frame("Mainmenu")
+        case ["Toggle", *text]:
+            text = " ".join(text)
+            state = toggle_handler(text)
+            if state:
+                image = image_handler(text, "Toggle On.png")
+            else:
+                image = image_handler(text, "Toggle Off.png")
+            toggle.configure(image=image)
         case _:
             print(text)
             switch_frame(text)
