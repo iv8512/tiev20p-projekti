@@ -265,6 +265,11 @@ class Blocklist:
         block = column.slaves()[y]
         block.config(bg="darkred")
 
+    def refresh(self):
+        for item in self.frame.slaves():
+            item.destroy()
+        Blocklist(self.frame, load_maps())
+
 def multiple(obj_type, amount, frame=True):
     if frame:
         frame = mainframe
@@ -299,6 +304,8 @@ def jump_point(text):
             print(f"{x}/{y}")
             x, y = int(x), int(y)
             test_list.toggle_colour(x, y)
+        case ["test"]:
+            test_list.refresh()
         case _:
             print(text)
             switch_frame(text)
@@ -311,6 +318,7 @@ def switch_frame(frame):
         test_list = Blocklist(mainframe, load_maps())
         #create_row(mainframe)
         #switch_sidebar(frame)
+        create_button(sidebar, "test")
     elif frame == "Play":
         create_label(mainframe, ("test"))
         
