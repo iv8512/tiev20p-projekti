@@ -192,8 +192,8 @@ def create_blocklist_old():
 
 class Create:
 
-    def __init__(self):
-        pass
+    def __init__(self, frame):
+        self.frame = frame
 
     def create_column(self, frame):
         column = Frame(frame, borderwidth=0)
@@ -215,9 +215,11 @@ class Create:
 
 class Blocklist(Create):
     
-    def __init__(self, frame, items):
-        self.frame = frame
+    def __init__(self, frame, items, debug=False):
+        super().__init__(frame)
         self.items = items
+        #self.include_plus_button = plus_button
+        self.debug = debug
         #self.columns = round(frame.winfo_width()/250)
         #self.rows = round(frame.winfo_height()/250)
         self.columns = 9
@@ -228,7 +230,8 @@ class Blocklist(Create):
     def create_grid(self, frame, blocks):
         full_rows = math.floor(blocks/self.columns)
         extra_blocks = blocks % self.columns
-        print(full_rows, extra_blocks)
+        if self.debug:
+            print(full_rows, extra_blocks)
         include_plus_button = True
         for column_id in range(self.columns):
             column = super().create_column(frame)
@@ -250,7 +253,7 @@ class Blocklist(Create):
                 self.create_true(column, f"{column_id}/{row_id}", ordinal_num)
                 self.block_states[f"{column_id}/{row_id}"] = True
             elif plus_button:
-                self.plus_button(column, "+")
+                self.create_plus_button(column, "+")
                 self.block_states["+"] = True
                 plus_button = False
             else:
@@ -261,34 +264,29 @@ class Blocklist(Create):
         """Create a light block"""
         block = super().create_block(column)[1]
         create_button(block, (f"Level {ordinal_num+1}", 15))
-        #create_label(block, self.items[ordinal_num])
-        #create_label(block, ordinal_num)
-        #create_button(block, block_id, "bottom", "both", False)
+        if self.debug:
+            create_label(block, self.items[ordinal_num])
+            create_label(block, ordinal_num)
+            create_label(block, block_id, "bottom", "both", False)
 
     def create_false(self, column, block_id):
         """Create a dark block"""
         block = super().create_block(column, C1, C1)[1]
-        #create_label(block, block_id, bg=C1, fg="lightgray")
+        if self.debug:
+            create_label(block, block_id, bg=C1, fg="lightgray")
 
-    def plus_button(self, column, block_id):
+    def create_plus_button(self, column, block_id):
         block_base, block = super().create_block(column, C1, C1)
-        
         image = image_handler("+", "icons/Disabled.png", 125, 45)
         label = Label(block, image=images["+"], cursor="hand2", bg=C1)
         label.pack(side="top", fill="both", expand=True)
         label.bind("<Button-1>", lambda event: self.plus_function())
         label.bind("<Enter>", lambda event: block_base.config(bg=C4))
         label.bind("<Leave>", lambda event: block_base.config(bg=C1))
-        #create_button(block, "0", "bottom", "both", False)
 
     def plus_function(self):
         new_map()
         self.refresh()
-
-    def toggle_colour(self, x, y):
-        column = mainframe.slaves()[x]
-        block = column.slaves()[y]
-        block.config(bg="darkred")
 
     def refresh(self):
         for item in self.frame.slaves():
@@ -298,18 +296,42 @@ class Blocklist(Create):
 class CreateMap(Create):
 
     def __init__(self, frame, level_id):
-        self.frame = frame
+        super().__init__(frame)
         self.level_id = level_id
+        self.paint_type = 1
+        self.map_data = self.load_data()["Map"]
         self.load_map()
 
     def load_map(self):
-        with open(f"maps/level_{self.level_id}.json") as data:
-            data = json.load(data)
-        for column_id, column_data in enumerate(data["Map"]):
+        for column_id, column_data in enumerate(self.map_data):
             column = super().create_column(self.frame)
             for row_id, row_data in enumerate(column_data):
-                block = super().create_block(column)[1]
-                create_label(block, f"{column_id}/{row_id}")
+                if row_data == 0:
+                    block = super().create_block(column, C2)[1]
+                elif row_data == 1:
+                    block = super().create_block(column, C6)[1]
+                elif row_data == 2:
+                    block = super().create_block(column, C8)[1]
+                elif row_data == 3:
+                    block = super().create_block(column, C7)[1]
+                create_button(block, f"{column_id}/{row_id}")
+
+    def load_data(self):
+        with open(f"maps/level_{self.level_id}.json") as data:
+            data = json.load(data)
+        return data
+
+    def change_colour(self, column, row):
+        column = mainframe.slaves()[column]
+        block = column.slaves()[row]
+        if self.paint_type == 0:
+            block.config(bg=C2)
+        elif self.paint_type == 1:
+            block.config(bg=C6)
+        elif self.paint_type == 2:
+            block.config(bg=C8)
+        elif self.paint_type == 3:
+            block.config(bg=C7)
 
 def multiple(obj_type, amount, frame=True):
     if frame:
@@ -362,14 +384,22 @@ def jump_point(text, toggle=False):
         case ["Back"]:
             switch_frame("Mainmenu")
         case ["Level", level_id]:
-            switch_sidebar("Level Info", level_id)
-        case ["Load", "Map"]:
+            switch_sidebar("Level info", level_id)
+        case ["Load", "map"]:
             level_id = sidebar.slaves()[1].cget("text").split()[1]
             switch_frame("Load map", level_id)
-        case [x, "id", y]:
-            print(f"{x}/{y}")
-            x, y = int(x), int(y)
-            maplist.toggle_colour(x, y)
+        case [column, "id", row]:
+            print(f"{column}/{row}")
+            column, row = int(column), int(row)
+            mapgrid.change_colour(column, row)
+            mapgrid.map_data[column][row] = mapgrid.paint_type
+        case ["Paint", "type", paint_type]:
+            paint_type = int(paint_type)
+            mapgrid.paint_type = paint_type
+            sidebar.slaves()[3].config(text=f"Selected paint: {paint_type}")
+        case ["Save", "changes"]:
+            with open(f"maps/level_{mapgrid.level_id}.json", "w") as file:
+                json.dump({"Map": mapgrid.map_data}, file, indent=4)
         case ["Toggle", *text]:
             text = " ".join(text)
             state = toggle_handler(text)
@@ -389,18 +419,19 @@ def switch_frame(frame, level_id=False):
         maplist = Blocklist(mainframe, load_maps())
         switch_sidebar(frame)
     elif frame == "Load map":
-        CreateMap(mainframe, level_id)
+        global mapgrid
+        mapgrid = CreateMap(mainframe, level_id)
         switch_sidebar(frame, level_id)
 
 def switch_sidebar(frame, level_id=False):
     clear_frame(sidebar)
     if frame == "Mainmenu":
-        create_label(sidebar, ("Level Info", 20), expand=False, bg=C2)
+        create_label(sidebar, ("Level info", 20), expand=False, bg=C2)
         create_label(sidebar, "Click on a map to continue", bg=C2)
         create_button(sidebar, ("Quit", 15), "left")
         create_button(sidebar, ("Refresh", 15), "left")
-    elif frame == "Level Info":
-        create_label(sidebar, ("Level Info", 20), expand=False, bg=C2)
+    elif frame == "Level info":
+        create_label(sidebar, ("Level info", 20), expand=False, bg=C2)
         create_label(sidebar, (f"Level {level_id}", 15), expand=False, bg=C2)
         create_label(sidebar, "", bg=C2)
         map_size, high_score = load_map_info(level_id)
@@ -408,13 +439,20 @@ def switch_sidebar(frame, level_id=False):
         create_label(sidebar, "{high_score}")
         create_label(sidebar, "something")
         create_label(sidebar, "", bg=C2)
-        create_button(sidebar, ("Load Map", 15), expand=False)
+        create_button(sidebar, ("Load map", 15), expand=False)
         create_button(sidebar, ("Quit", 15), "left")
         create_button(sidebar, ("Refresh", 15), "left")
     elif frame == "Load map":
-        create_label(sidebar, ("Level Info", 20), expand=False, bg=C2)
+        create_label(sidebar, ("Level info", 20), expand=False, bg=C2)
         create_label(sidebar, (f"Level {level_id}", 15), expand=False, bg=C2)
-        create_label(sidebar, "Info", bg=C2)
+        create_label(sidebar, "", bg=C2)
+        create_label(sidebar, ("Selected paint: 1", 15), expand=False)
+        create_button(sidebar, "Paint type 0", expand=False)
+        create_button(sidebar, "Paint type 1", expand=False)
+        create_button(sidebar, "Paint type 2", expand=False)
+        create_button(sidebar, "Paint type 3", expand=False)
+        create_label(sidebar, "", bg=C2)
+        create_button(sidebar, ("Save changes", 15), expand=False)
         create_button(sidebar, ("Back", 15), "left")
 
 def load_map_info(level_id):
