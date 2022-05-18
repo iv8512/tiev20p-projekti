@@ -155,6 +155,12 @@ def toggle_handler(text):
 images = {}
 toggles = {}
 
+def create_column(frame):
+    column = Frame(frame, borderwidth=0)
+    column.pack(side="left", fill="both", expand=True)
+    column.config(bg=C2)
+    return column
+
 def create_row(frame, side="top", fill="both", expand=True, border=5, bg=C2):
     frame = Frame(frame, borderwidth=border)
     frame.pack(side=side, fill=fill, expand=expand)
@@ -169,7 +175,7 @@ def multiple(obj_type, amount, frame=True):
         items.append(obj_type(frame))
     return items
 
-def create_square(row, i, side="left", border=5):
+def create_square(row, i, side="top", border=5):
     frame1 = Frame(row, borderwidth=border)
     frame1.pack(side=side, fill="both", expand=True)
     frame1.config(bg=C2)
@@ -178,14 +184,14 @@ def create_square(row, i, side="left", border=5):
     frame2.config(bg=C3)
     create_label(frame2, i)
 
-def create_blocklist(frame):
+def create_mapgrid(frame):
     geometry = root.winfo_geometry()
     print(geometry)
     print(frame.winfo_width(), frame.winfo_height())
-    for row_i in range(11):
-        row = create_row(frame, border=0)
-        for column_i in range(15):
-            create_square(row, f"{column_i}/{row_i}", border=5)
+    for column_i in range(15):
+        column = create_column(frame)
+        for row_i in range(11):
+            create_square(column, f"{column_i}/{row_i}", border=5)
 
 """
 
@@ -201,6 +207,9 @@ sidebar = Frame(root, width=400)
 sidebar.pack(side="left", fill="both")
 sidebar.config(bg=C2)
 sidebar.pack_propagate(0)
+
+def startup():
+    switch_frame("Mainmenu")
 
 def jump_point(text, toggle=False):
     match text.split():
@@ -225,7 +234,8 @@ def switch_frame(frame):
     if frame == "Mainmenu":
         switch_sidebar(frame)
     elif frame == "Play":
-        create_blocklist(mainframe)
+        create_mapgrid(mainframe)
+        movement_controls()
         
     elif frame == "LVL-Selector":
         LVL_Select_scrn = create_row(mainframe, "top", "both", True, 5, C2)
@@ -279,7 +289,55 @@ def clear_frame(*frames):
         for item in frame.slaves():
             item.destroy()
 
-switch_frame("Mainmenu")
+def movement_controls():
+    global current_pos
+    current_pos = [7, 5]
+    change_colour(current_pos[0], current_pos[1])
+    root.bind("w", lambda event: position_handler("w"))
+    root.bind("a", lambda event: position_handler("a"))
+    root.bind("s", lambda event: position_handler("s"))
+    root.bind("d", lambda event: position_handler("d"))
+
+def position_handler(move=""):
+    if movement_validator(move):
+        return
+    global current_pos
+    change_colour(current_pos[0], current_pos[1], False)
+    if move == "w":
+        current_pos[1] -= 1
+    elif move == "a":
+        current_pos[0] -= 1
+    elif move == "s":
+        current_pos[1] += 1
+    elif move == "d":
+        current_pos[0] += 1
+    change_colour(current_pos[0], current_pos[1])
+    position_label = sidebar.pack_slaves()[0]
+    string = f"{current_pos[0]}/{current_pos[1]}"
+    position_label.config(text=string)
+
+def movement_validator(key):
+    if key == "w":
+        if current_pos[1] - 1 < 0:
+            return True
+    elif key == "a":
+        if current_pos[0] - 1 < 0:
+            return True
+    elif key == "s":
+        if current_pos[1] + 1 > 10:
+            return True
+    elif key == "d":
+        if current_pos[0] + 1 > 14:
+            return True
+
+def change_colour(column, row, state=True):
+    selected_column = mainframe.slaves()[column]
+    # print(len(mainframe.slaves())) = 11
+    item = selected_column.slaves()[row]
+    if state:
+        item.config(bg=C8)
+    else:
+        item.config(bg=C2)
 
 root.bind("<Escape>", quit) #sys.exit
 #root.iconbitmap("blume.ico")
@@ -287,4 +345,5 @@ root.title("Pac-man")
 #root.geometry("1000x600+100+100")
 #root.minsize(250, 200)
 root.attributes('-fullscreen', True)
+root.after(6, startup)
 root.mainloop()
