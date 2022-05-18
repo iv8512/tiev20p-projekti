@@ -86,17 +86,17 @@ def create_label(frame, text, side="top", fill="both", expand=True, bg=C3, fg="w
     label = Label(frame, text=text, state=state)
     label.pack(side=side, fill=fill, expand=expand)
     label.config(fg=fg, bg=bg)
-    label.config(font=("TkDefaultFont", size))
+    label.config(height=2, font=("TkDefaultFont", size))
     return label
 
-def create_button(frame, text, side="top", fill="both", expand=True, bg=C3):
+def create_button(frame, text, side="top", fill="both", expand=True, bg=C3, fg="white"):
     # Other
     text, size, state = text_handler(text)
     background = create_background(frame, side, fill, expand, bg)
     # Main
     button = Label(background, text=text, state=state, cursor="hand2")
     button.pack(side=side, fill="both", expand=True)
-    button.config(bg=bg, fg="white")
+    button.config(bg=bg, fg=fg)
     button.config(height=2, font=("TkDefaultFont", size))
     button.bind("<Button-1>", lambda event: jump_point(text))
     # Hover effect
@@ -226,6 +226,7 @@ class Blocklist(Create):
         self.rows = 6
         self.block_states = {}
         self.create_grid(frame, len(items))
+        self.current_highlight = None
 
     def create_grid(self, frame, blocks):
         full_rows = math.floor(blocks/self.columns)
@@ -262,8 +263,8 @@ class Blocklist(Create):
 
     def create_true(self, column, block_id, ordinal_num):
         """Create a light block"""
-        block = super().create_block(column)[1]
-        create_button(block, (f"Level {ordinal_num+1}", 15))
+        block_base, block = super().create_block(column)
+        self.create_button(block, f"Level {ordinal_num+1}", block_base)
         if self.debug:
             create_label(block, self.items[ordinal_num])
             create_label(block, ordinal_num)
@@ -287,6 +288,30 @@ class Blocklist(Create):
     def plus_function(self):
         new_map()
         self.refresh()
+
+    def create_button(self, frame, text, block_base):
+        # Other
+        background = create_background(frame, "top", "both", True, C3)
+        # Main
+        button = Label(background, text=text, cursor="hand2")
+        button.pack(side="top", fill="both", expand=True)
+        button.config(bg=C3, fg="white")
+        button.config(height=2, font=("TkDefaultFont", 15))
+        button.bind("<Button-1>", lambda event: self.jump_point(text, block_base))
+        # Hover effect
+        button.bind("<Enter>", lambda event: background.config(bg=C4))
+        button.bind("<Leave>", lambda event: background.config(bg=C3))
+        return button
+
+    def jump_point(self, text, block_base):
+        self.block_highlight(block_base)
+        jump_point(text)
+
+    def block_highlight(self, block_base):
+        if self.current_highlight:
+            self.current_highlight.config(bg=C2)
+        block_base.config(bg=C4)
+        self.current_highlight = block_base
 
     def refresh(self):
         for item in self.frame.slaves():
@@ -314,7 +339,7 @@ class CreateMap(Create):
                     block = super().create_block(column, C8)[1]
                 elif row_data == 3:
                     block = super().create_block(column, C7)[1]
-                create_button(block, f"{column_id}/{row_id}")
+                create_button(block, f"{column_id}/{row_id}", fg=C3)
 
     def load_data(self):
         with open(f"maps/level_{self.level_id}.json") as data:
