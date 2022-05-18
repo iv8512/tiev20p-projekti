@@ -182,7 +182,8 @@ def create_square(row, i, side="top", border=5):
     frame2 = Frame(frame1)
     frame2.pack(side=side, fill="both", expand=True)
     frame2.config(bg=C3)
-    create_label(frame2, i)
+    # makes apples invisible
+    # create_label(frame2, i)
 
 def create_mapgrid(frame):
     geometry = root.winfo_geometry()
@@ -210,7 +211,10 @@ sidebar.pack_propagate(0)
 
 def startup():
     switch_frame("Mainmenu")
+    
     global walls
+    global apples
+    apples = []
     walls = []
 
 def jump_point(text, toggle=False):
@@ -227,22 +231,15 @@ def jump_point(text, toggle=False):
             else:
                 image = image_handler(text, "Toggle Off.png")
             toggle.configure(image=image)
-        case ["Summon-wall"]:
-            block_update(5, 5, "wall")
-        case ["LVL-1"]:
-            load_map(1)
-        case ["LVL-2"]:
-            load_map(2)
-        case ["LVL-3"]:
-            load_map(3)
         case _:
-            print(text)
+            print("clicked: ", text)
             switch_frame(text)
 
 def switch_frame(frame):
     clear_frame(mainframe)
     if frame == "Mainmenu":
         switch_sidebar(frame)
+        
     elif frame == "Play":
         switch_sidebar(frame)
         create_mapgrid(mainframe)
@@ -266,6 +263,9 @@ def switch_frame(frame):
         create_label(row_1, "testtest")
         create_label(row_2, "testtest")
 
+    elif frame == "LVL-1":
+        load_map(1)
+
 def switch_sidebar(frame):
     clear_frame(sidebar)
     if frame == "Mainmenu":
@@ -288,7 +288,6 @@ def switch_sidebar(frame):
         create_button(menu_bar, ("Play", 20), "top", "x", True, C3)
         create_button(menu_bar, ("LVL-Selector", 20), "top", "x", True, C3)
         create_button(menu_bar, ("Settings", 20), "top", "x", True, C3)
-        create_button(menu_bar, ("Summon-wall", 20), "top", "x", True, C3)
 
         create_label(sidebar, "", "top", "x", True, C2)
 
@@ -332,10 +331,14 @@ def block_update(column, row, block_type):
     if block_type == 1:
         change_colour(column, row, "wall")
         global walls
-        walls.append((column, row))
+        walls.append([column, row])
     elif block_type == 2:
         change_colour(column, row, "player")
         movement_controls(column, row)
+    elif block_type == 3:
+        change_colour(column, row, "apple")
+        global apples
+        apples.append([column, row])
     else:
         change_colour(column, row, "none")
 
@@ -350,18 +353,36 @@ def load_map(lvl_id):
             block_update(column_index, row_index, block)
     
 def movement_validator(key):
-    # a return True means that you've hit a wall
+    global walls
+    global apples
+    global current_pos
     if key == "w":
-        if current_pos[1] - 1 < 0:
+        # calculates position if move is made
+        new_pos = [current_pos[0], current_pos[1] - 1]
+        # checks if new position is in an apple
+        if new_pos in apples:
+            apples.remove(new_pos)
+        # checks if new position is invalid
+        if new_pos in walls or current_pos[1] - 1 < 0:
+            # returns True if you've hit a wall or the edge
             return True
     elif key == "a":
-        if current_pos[0] - 1 < 0:
+        new_pos = [current_pos[0] - 1, current_pos[1]]
+        if new_pos in apples:
+            apples.remove(new_pos)
+        if new_pos in walls or current_pos[0] - 1 < 0:
             return True
     elif key == "s":
-        if current_pos[1] + 1 > 10:
+        new_pos = [current_pos[0], current_pos[1] + 1]
+        if new_pos in apples:
+            apples.remove(new_pos)
+        if new_pos in walls or current_pos[1] + 1 > 10:
             return True
     elif key == "d":
-        if current_pos[0] + 1 > 14:
+        new_pos = [current_pos[0] + 1, current_pos[1]]
+        if new_pos in apples:
+            apples.remove(new_pos)
+        if new_pos in walls or current_pos[0] + 1 > 14:
             return True
 
 def change_colour(column, row, state):
@@ -370,10 +391,16 @@ def change_colour(column, row, state):
     item = selected_column.slaves()[row]
     if state == "player":
         item.config(bg=C8)
+        item.slaves()[0].config(bg=C3)
     elif state == "wall":
         item.config(bg=C6)
+        item.slaves()[0].config(bg=C3)
+    elif state == "apple":
+        item.config(bg=C2)
+        item.slaves()[0].config(bg=C7)
     elif state == "none":
         item.config(bg=C2)
+        item.slaves()[0].config(bg=C3)
     else:
         item.config(bg=C2)
 
