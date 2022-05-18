@@ -27,6 +27,7 @@ class InfoClass:
         self.button = self.text_handler("button")
         self.toggle = self.text_handler("toggle")
         self.info = self.text_handler("info")
+        self.frame = self.text_handler("frame")
         
     def text_handler(self, item):
         text = info_file["InfoClass"][item]
@@ -157,13 +158,19 @@ def toggle_handler(text):
 images = {}
 toggles = {}
 
-def create_row(bg="#323233", borderwidth=0):
+def create_frame(frame, side="top", fill="both", expand=True, border=0, bg=C2):
+    frame = Frame(frame, borderwidth=border)
+    frame.pack(side=side, fill=fill, expand=expand)
+    frame.config(bg=bg)
+    return frame
+
+def create_row_old(bg="#323233", borderwidth=0):
     frame = Frame(mainframe, borderwidth=borderwidth)
     frame.pack(side="top", fill="both", expand=True)
     frame.config(bg=bg)
     return frame
 
-def create_square(row, i, side="left"):
+def create_square_old(row, i, side="left"):
     frame1 = Frame(row, borderwidth=5)
     frame1.pack(side=side, fill="both", expand=True)
     frame1.config(bg="#252526")
@@ -172,7 +179,7 @@ def create_square(row, i, side="left"):
     frame2.config(bg="#323233")
     create_label(frame2, i)
 
-def create_blocklist():
+def create_blocklist_old():
     geometry = root.winfo_geometry()
     print(geometry)
     width = round(mainframe.winfo_width()/250)
@@ -183,13 +190,38 @@ def create_blocklist():
         for column_i in range(width):
             create_square(row, f"{column_i}/{row_i}")
 
-class Blocklist:
+class Create:
+
+    def __init__(self):
+        pass
+
+    def create_column(self, frame):
+        column = Frame(frame, borderwidth=0)
+        column.pack(side="left", fill="both", expand=True)
+        column.config(bg=C2)
+        return column
+
+    def create_block(self, column, bg=C2, fg=C3):
+        # Outer
+        block_base = Frame(column, borderwidth=5)
+        block_base.pack(side="top", fill="both", expand=True)
+        block_base.config(bg=bg)
+        # Inner
+        block = Frame(block_base)
+        block.pack(side="top", fill="both", expand=True)
+        block.config(bg=fg)
+        block.pack_propagate(0)
+        return block_base, block
+
+class Blocklist(Create):
     
     def __init__(self, frame, items):
         self.frame = frame
         self.items = items
-        self.columns = round(frame.winfo_width()/250)
-        self.rows = round(frame.winfo_height()/250)
+        #self.columns = round(frame.winfo_width()/250)
+        #self.rows = round(frame.winfo_height()/250)
+        self.columns = 9
+        self.rows = 6
         self.block_states = {}
         self.create_grid(frame, len(items))
 
@@ -199,7 +231,7 @@ class Blocklist:
         print(full_rows, extra_blocks)
         include_plus_button = True
         for column_id in range(self.columns):
-            column = self.create_column(frame)
+            column = super().create_column(frame)
             # Calculate blocks
             plus_button = False
             blocks = full_rows
@@ -210,12 +242,6 @@ class Blocklist:
                 include_plus_button = False
             # Create blocks
             self.create_blocks(column, column_id, blocks, plus_button)
-
-    def create_column(self, frame):
-        column = Frame(frame, borderwidth=0)
-        column.pack(side="left", fill="both", expand=True)
-        column.config(bg=C2)
-        return column
 
     def create_blocks(self, column, column_id, active_blocks, plus_button):
         for row_id in range(self.rows):
@@ -231,40 +257,29 @@ class Blocklist:
                 self.create_false(column, f"{column_id}/{row_id}")
                 self.block_states[f"{column_id}/{row_id}"] = False
 
-    def create_false(self, column, block_id):
-        # Create a dark block
-        block = self.create_block(column, C1, C1)
-        create_label(block, block_id, bg=C1, fg="lightgray")
-
     def create_true(self, column, block_id, ordinal_num):
-        # Create a light block
-        block = self.create_block(column)
-        create_label(block, self.items[ordinal_num])
-        create_label(block, ordinal_num)
-        create_button(block, block_id, "bottom", "both", False)
+        """Create a light block"""
+        block = super().create_block(column)[1]
+        create_button(block, (f"Level {ordinal_num+1}", 15))
+        #create_label(block, self.items[ordinal_num])
+        #create_label(block, ordinal_num)
+        #create_button(block, block_id, "bottom", "both", False)
+
+    def create_false(self, column, block_id):
+        """Create a dark block"""
+        block = super().create_block(column, C1, C1)[1]
+        #create_label(block, block_id, bg=C1, fg="lightgray")
 
     def plus_button(self, column, block_id):
-        block = self.create_block(column, C1, C1)
+        block_base, block = super().create_block(column, C1, C1)
         
         image = image_handler("+", "icons/Disabled.png", 125, 45)
-        label = Label(block, image=images["+"], cursor="hand2")
-        label.pack(side="top", expand=True)
-        label.config(bg=C1)
+        label = Label(block, image=images["+"], cursor="hand2", bg=C1)
+        label.pack(side="top", fill="both", expand=True)
         label.bind("<Button-1>", lambda event: self.plus_function())
-        
+        label.bind("<Enter>", lambda event: block_base.config(bg=C4))
+        label.bind("<Leave>", lambda event: block_base.config(bg=C1))
         #create_button(block, "0", "bottom", "both", False)
-
-    def create_block(self, column, bg=C2, fg=C3):
-        # Outer
-        block_base = Frame(column, borderwidth=5)
-        block_base.pack(side="top", fill="both", expand=True)
-        block_base.config(bg=bg)
-        # Inner
-        block = Frame(block_base)
-        block.pack(side="top", fill="both", expand=True)
-        block.config(bg=fg)
-        block.pack_propagate(0)
-        return block
 
     def plus_function(self):
         new_map()
@@ -280,6 +295,22 @@ class Blocklist:
             item.destroy()
         Blocklist(self.frame, load_maps())
 
+class CreateMap(Create):
+
+    def __init__(self, frame, level_id):
+        self.frame = frame
+        self.level_id = level_id
+        self.load_map()
+
+    def load_map(self):
+        with open(f"maps/level_{self.level_id}.json") as data:
+            data = json.load(data)
+        for column_id, column_data in enumerate(data["Map"]):
+            column = super().create_column(self.frame)
+            for row_id, row_data in enumerate(column_data):
+                block = super().create_block(column)[1]
+                create_label(block, f"{column_id}/{row_id}")
+
 def multiple(obj_type, amount, frame=True):
     if frame:
         frame = mainframe
@@ -292,7 +323,8 @@ def load_maps():
     maps = []
     for path, folders, files in os.walk("maps"):
         for i, file in enumerate(files):
-            print(file)
+            if "template" in file:
+                continue
             with open(f"maps/{file}") as data:
                 data = json.load(data)
             maps.append(file)
@@ -302,9 +334,12 @@ def load_maps():
 def new_map():
     map_id = len(load_maps()) + 1
     print(f"creating new map file level_{map_id}.json")
+
+    with open("maps/map_template.json") as data:
+        data = json.load(data)
     
     with open(f"maps/level_{map_id}.json", "w") as file:
-        json.dump({"Level": map_id}, file, indent=4)
+        json.dump(data, file, indent=4)
 
 """
 
@@ -321,12 +356,20 @@ def jump_point(text, toggle=False):
     #match re.split(" |/", text):
         case ["Quit"]:
             quit()
+        case ["Refresh"]:
+            maplist.refresh()
+            switch_sidebar("Mainmenu")
         case ["Back"]:
             switch_frame("Mainmenu")
+        case ["Level", level_id]:
+            switch_sidebar("Level Info", level_id)
+        case ["Load", "Map"]:
+            level_id = sidebar.slaves()[1].cget("text").split()[1]
+            switch_frame("Load map", level_id)
         case [x, "id", y]:
             print(f"{x}/{y}")
             x, y = int(x), int(y)
-            test_list.toggle_colour(x, y)
+            maplist.toggle_colour(x, y)
         case ["Toggle", *text]:
             text = " ".join(text)
             state = toggle_handler(text)
@@ -335,32 +378,50 @@ def jump_point(text, toggle=False):
             else:
                 image = image_handler(text, "Toggle Off.png")
             toggle.configure(image=image)
-        case ["test"]:
-            test_list.refresh()
         case _:
             print(text)
             switch_frame(text)
 
-def switch_frame(frame):
+def switch_frame(frame, level_id=False):
     clear_frame(mainframe)
     if frame == "Mainmenu":
-        #create_blocklist()
-        global test_list
-        test_list = Blocklist(mainframe, load_maps())
-        #create_row(mainframe)
-        #switch_sidebar(frame)
+        global maplist
+        maplist = Blocklist(mainframe, load_maps())
+        switch_sidebar(frame)
+    elif frame == "Load map":
+        CreateMap(mainframe, level_id)
+        switch_sidebar(frame, level_id)
 
-        create_toggle(sidebar, "test1", expand=False)
-        create_button(sidebar, "test")
-        create_toggle(sidebar, "test2")
-    elif frame == "Play":
-        create_label(mainframe, ("test"))
-        
-    elif frame == "LVL-Selector":
-        pass
-
-def switch_sidebar(frame):
+def switch_sidebar(frame, level_id=False):
     clear_frame(sidebar)
+    if frame == "Mainmenu":
+        create_label(sidebar, ("Level Info", 20), expand=False, bg=C2)
+        create_label(sidebar, "Click on a map to continue", bg=C2)
+        create_button(sidebar, ("Quit", 15), "left")
+        create_button(sidebar, ("Refresh", 15), "left")
+    elif frame == "Level Info":
+        create_label(sidebar, ("Level Info", 20), expand=False, bg=C2)
+        create_label(sidebar, (f"Level {level_id}", 15), expand=False, bg=C2)
+        create_label(sidebar, "", bg=C2)
+        map_size, high_score = load_map_info(level_id)
+        create_label(sidebar, (f"Map size: {map_size}", 13))
+        create_label(sidebar, "{high_score}")
+        create_label(sidebar, "something")
+        create_label(sidebar, "", bg=C2)
+        create_button(sidebar, ("Load Map", 15), expand=False)
+        create_button(sidebar, ("Quit", 15), "left")
+        create_button(sidebar, ("Refresh", 15), "left")
+    elif frame == "Load map":
+        create_label(sidebar, ("Level Info", 20), expand=False, bg=C2)
+        create_label(sidebar, (f"Level {level_id}", 15), expand=False, bg=C2)
+        create_label(sidebar, "Info", bg=C2)
+        create_button(sidebar, ("Back", 15), "left")
+
+def load_map_info(level_id):
+    with open(f"maps/level_{level_id}.json") as data:
+        data = json.load(data)
+    map_size = f"{len(data['Map'])}x{len(data['Map'][0])}"
+    return map_size, 0
 
 def clear_frame(*frames):
     for frame in frames:
@@ -372,6 +433,7 @@ root.iconbitmap("icons/blume.ico")
 root.title("Pac-man LVL-Editor")
 #root.geometry("1000x600+100+100")
 #root.minsize(250, 200)
-root.attributes('-fullscreen', True)
+root.state('zoomed')
+#root.attributes('-fullscreen', True)
 root.after(6, startup)
 root.mainloop()

@@ -1,12 +1,13 @@
 {
     "InfoClass": {
         "background": "frame, side, fill, expand, border=5, cursor=False",
-        "label": "frame, text/:text_handler:, fill=\"both\", expand=True, bg=\"#323233\"",
+        "label": "frame, text/:text_handler:, side=\"top\", fill=\"both\", expand=True, bg=C3, fg=\"white\"",
         "button": "frame, text/:text_handler:, :test:, bg=\"#323233\"",
         "toggle": "frame, text/:text_handler:, :test:",
         "info": "background, label, button, toggle, info",
         "text_handler": "(text, size=10, state=NORMAL)",
-        "test": "side=\"top\", fill=\"both\", expand=True"
+        "test": "side=\"top\", fill=\"both\", expand=True",
+        "frame": "frame, side=\"top\", fill=\"both\", expand=True, border=0, bg=C2"
     },
     "Colours": {
         "Base Colours": {
