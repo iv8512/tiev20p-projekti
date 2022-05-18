@@ -48,5 +48,5 @@ if __name__ == '__main__':
     root.bind("<Escape>", quit) #sys.exit
     #root.iconbitmap("blume.ico")
     root.title("Colours")
-    root.geometry("400x250")
+    root.geometry("600x400")
     root.mainloop()
