@@ -1,6 +1,6 @@
 from tkinter import *
 from colours import *
-import json
+import json, math, os
 from PIL import ImageTk, Image
 #from interactables import *
 
@@ -155,6 +155,121 @@ def toggle_handler(text):
 images = {}
 toggles = {}
 
+class Create:
+
+    def __init__(self, frame):
+        self.frame = frame
+
+    def create_column(self, frame):
+        column = Frame(frame, borderwidth=0)
+        column.pack(side="left", fill="both", expand=True)
+        column.config(bg=C2)
+        return column
+
+    def create_block(self, column, bg=C2, fg=C3):
+        # Outer
+        block_base = Frame(column, borderwidth=5)
+        block_base.pack(side="top", fill="both", expand=True)
+        block_base.config(bg=bg)
+        # Inner
+        block = Frame(block_base)
+        block.pack(side="top", fill="both", expand=True)
+        block.config(bg=fg)
+        block.pack_propagate(0)
+        return block_base, block
+
+class Blocklist(Create):
+    
+    def __init__(self, frame, items, debug=False):
+        super().__init__(frame)
+        self.items = items
+        #self.include_plus_button = plus_button
+        self.debug = debug
+        #self.columns = round(frame.winfo_width()/250)
+        #self.rows = round(frame.winfo_height()/250)
+        self.columns = 9
+        self.rows = 6
+        self.block_states = {}
+        self.create_grid(frame, len(items))
+
+    def create_grid(self, frame, blocks):
+        full_rows = math.floor(blocks/self.columns)
+        extra_blocks = blocks % self.columns
+        if self.debug:
+            print(full_rows, extra_blocks)
+        include_plus_button = False
+        for column_id in range(self.columns):
+            column = super().create_column(frame)
+            # Calculate blocks
+            plus_button = False
+            blocks = full_rows
+            if column_id < extra_blocks:
+                blocks += 1
+            elif include_plus_button:
+                plus_button = True
+                include_plus_button = False
+            # Create blocks
+            self.create_blocks(column, column_id, blocks, plus_button)
+
+    def create_blocks(self, column, column_id, active_blocks, plus_button):
+        for row_id in range(self.rows):
+            if not row_id >= active_blocks:
+                ordinal_num = self.columns * row_id + column_id
+                self.create_true(column, f"{column_id}/{row_id}", ordinal_num)
+                self.block_states[f"{column_id}/{row_id}"] = True
+            elif plus_button:
+                self.create_plus_button(column, "+")
+                self.block_states["+"] = True
+                plus_button = False
+            else:
+                self.create_false(column, f"{column_id}/{row_id}")
+                self.block_states[f"{column_id}/{row_id}"] = False
+
+    def create_true(self, column, block_id, ordinal_num):
+        """Create a light block"""
+        block = super().create_block(column)[1]
+        create_button(block, (f"Level {ordinal_num+1}", 15))
+        if self.debug:
+            create_label(block, self.items[ordinal_num])
+            create_label(block, ordinal_num)
+            create_label(block, block_id, "bottom", "both", False)
+
+    def create_false(self, column, block_id):
+        """Create a dark block"""
+        block = super().create_block(column, C1, C1)[1]
+        if self.debug:
+            create_label(block, block_id, bg=C1, fg="lightgray")
+
+    def create_plus_button(self, column, block_id):
+        block_base, block = super().create_block(column, C1, C1)
+        image = image_handler("+", "icons/Disabled.png", 125, 45)
+        label = Label(block, image=images["+"], cursor="hand2", bg=C1)
+        label.pack(side="top", fill="both", expand=True)
+        label.bind("<Button-1>", lambda event: self.plus_function())
+        label.bind("<Enter>", lambda event: block_base.config(bg=C4))
+        label.bind("<Leave>", lambda event: block_base.config(bg=C1))
+
+    def plus_function(self):
+        new_map()
+        self.refresh()
+
+    def refresh(self):
+        for item in self.frame.slaves():
+            item.destroy()
+        Blocklist(self.frame, load_maps())
+
+def load_maps():
+    maps = []
+    for path, folders, files in os.walk("maps"):
+        for i, file in enumerate(files):
+            if "template" in file:
+                continue
+            with open(f"maps/{file}") as data:
+                data = json.load(data)
+            maps.append(file)
+    maps.sort(key=lambda f: int(''.join(filter(str.isdigit, f))))
+    return maps
+
 def create_column(frame):
     column = Frame(frame, borderwidth=0)
     column.pack(side="left", fill="both", expand=True)
@@ -212,10 +327,8 @@ sidebar.pack_propagate(0)
 def startup():
     switch_frame("Mainmenu")
     
-    global walls
-    global apples
-    apples = []
-    walls = []
+    global walls, apples
+    walls, apples = [], []
 
 def jump_point(text, toggle=False):
     match text.split():
@@ -223,6 +336,11 @@ def jump_point(text, toggle=False):
             quit()
         case ["Back"]:
             switch_frame("Mainmenu")
+        case ["Level", level_id]:
+            global walls, apples
+            walls = []
+            apples = []
+            load_map(level_id)
         case ["Toggle", *text]:
             text = " ".join(text)
             state = toggle_handler(text)
@@ -245,16 +363,7 @@ def switch_frame(frame):
         create_mapgrid(mainframe)
         
     elif frame == "LVL-Selector":
-        LVL_Select_scrn = create_row(mainframe, "top", "both", True, 5, C2)
-        
-        lvl_box = create_row(LVL_Select_scrn, "left", "both", True, 5, C3)
-        create_label(lvl_box, "", "left", "x", True, C3)
-        create_button(lvl_box, ("LVL-1", 20), "left", "x", False, C3)
-        create_button(lvl_box, ("LVL-2", 20), "left", "x", False, C3)
-        create_button(lvl_box, ("LVL-3", 20), "left", "x", False, C3)
-        create_button(lvl_box, ("LVL-4", 20), "left", "x", False, C3)
-        create_button(lvl_box, ("LVL-5", 20), "left", "x", False, C3)
-        create_label(lvl_box, "", "left", "x", True, C3)
+        maplist = Blocklist(mainframe, load_maps())
         
     elif frame == "Settings":
         #Settings_container = create_label(mainframe, "", "both", True, C3)
@@ -322,7 +431,7 @@ def position_handler(move=""):
         current_pos[0] += 1
     change_colour(current_pos[0], current_pos[1], "player")
     position_label = sidebar.pack_slaves()[0]
-    string = f"{current_pos[0]}/{current_pos[1]}"
+    string = f"{current_pos[0]}/{current_pos[1]}/{len(apples)}"
     position_label.config(text=string)
 
 
@@ -353,9 +462,7 @@ def load_map(lvl_id):
             block_update(column_index, row_index, block)
     
 def movement_validator(key):
-    global walls
-    global apples
-    global current_pos
+    global walls, apples, current_pos
     if key == "w":
         # calculates position if move is made
         new_pos = [current_pos[0], current_pos[1] - 1]
