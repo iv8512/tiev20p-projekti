@@ -210,6 +210,8 @@ sidebar.pack_propagate(0)
 
 def startup():
     switch_frame("Mainmenu")
+    global walls
+    walls = []
 
 def jump_point(text, toggle=False):
     match text.split():
@@ -225,6 +227,14 @@ def jump_point(text, toggle=False):
             else:
                 image = image_handler(text, "Toggle Off.png")
             toggle.configure(image=image)
+        case ["Summon-wall"]:
+            block_update(5, 5, "wall")
+        case ["LVL-1"]:
+            load_map(1)
+        case ["LVL-2"]:
+            load_map(2)
+        case ["LVL-3"]:
+            load_map(3)
         case _:
             print(text)
             switch_frame(text)
@@ -234,8 +244,8 @@ def switch_frame(frame):
     if frame == "Mainmenu":
         switch_sidebar(frame)
     elif frame == "Play":
+        switch_sidebar(frame)
         create_mapgrid(mainframe)
-        movement_controls()
         
     elif frame == "LVL-Selector":
         LVL_Select_scrn = create_row(mainframe, "top", "both", True, 5, C2)
@@ -278,6 +288,7 @@ def switch_sidebar(frame):
         create_button(menu_bar, ("Play", 20), "top", "x", True, C3)
         create_button(menu_bar, ("LVL-Selector", 20), "top", "x", True, C3)
         create_button(menu_bar, ("Settings", 20), "top", "x", True, C3)
+        create_button(menu_bar, ("Summon-wall", 20), "top", "x", True, C3)
 
         create_label(sidebar, "", "top", "x", True, C2)
 
@@ -289,10 +300,9 @@ def clear_frame(*frames):
         for item in frame.slaves():
             item.destroy()
 
-def movement_controls():
+def movement_controls(column, row):
     global current_pos
-    current_pos = [7, 5]
-    change_colour(current_pos[0], current_pos[1])
+    current_pos = [column, row]
     root.bind("w", lambda event: position_handler("w"))
     root.bind("a", lambda event: position_handler("a"))
     root.bind("s", lambda event: position_handler("s"))
@@ -302,7 +312,7 @@ def position_handler(move=""):
     if movement_validator(move):
         return
     global current_pos
-    change_colour(current_pos[0], current_pos[1], False)
+    change_colour(current_pos[0], current_pos[1], "none")
     if move == "w":
         current_pos[1] -= 1
     elif move == "a":
@@ -311,12 +321,36 @@ def position_handler(move=""):
         current_pos[1] += 1
     elif move == "d":
         current_pos[0] += 1
-    change_colour(current_pos[0], current_pos[1])
+    change_colour(current_pos[0], current_pos[1], "player")
     position_label = sidebar.pack_slaves()[0]
     string = f"{current_pos[0]}/{current_pos[1]}"
     position_label.config(text=string)
 
+
+# TODO move this
+def block_update(column, row, block_type):
+    if block_type == 1:
+        change_colour(column, row, "wall")
+        global walls
+        walls.append((column, row))
+    elif block_type == 2:
+        change_colour(column, row, "player")
+        movement_controls(column, row)
+    else:
+        change_colour(column, row, "none")
+
+# TODO move this
+def load_map(lvl_id):
+    with open(f"maps/level_{lvl_id}.json") as data:
+        data = json.load(data)
+    switch_frame("Play")
+    print(f"loading level {lvl_id}")
+    for column_index, column_data in enumerate(data["Map"]):
+        for row_index, block in enumerate(column_data):
+            block_update(column_index, row_index, block)
+    
 def movement_validator(key):
+    # a return True means that you've hit a wall
     if key == "w":
         if current_pos[1] - 1 < 0:
             return True
@@ -330,12 +364,16 @@ def movement_validator(key):
         if current_pos[0] + 1 > 14:
             return True
 
-def change_colour(column, row, state=True):
+def change_colour(column, row, state):
     selected_column = mainframe.slaves()[column]
     # print(len(mainframe.slaves())) = 11
     item = selected_column.slaves()[row]
-    if state:
+    if state == "player":
         item.config(bg=C8)
+    elif state == "wall":
+        item.config(bg=C6)
+    elif state == "none":
+        item.config(bg=C2)
     else:
         item.config(bg=C2)
 
