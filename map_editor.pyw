@@ -219,14 +219,16 @@ class Blocklist(Create):
         super().__init__(frame)
         self.items = items
         #self.include_plus_button = plus_button
+        #self.has_plus_button = 
         self.debug = debug
         #self.columns = round(frame.winfo_width()/250)
         #self.rows = round(frame.winfo_height()/250)
         self.columns = 9
         self.rows = 6
-        self.block_states = {}
-        self.create_grid(frame, len(items))
+        self.block_locations = {}
         self.current_highlight = None
+        self.current_level_id = None
+        self.create_grid(frame, len(items))
 
     def create_grid(self, frame, blocks):
         full_rows = math.floor(blocks/self.columns)
@@ -246,25 +248,29 @@ class Blocklist(Create):
                 include_plus_button = False
             # Create blocks
             self.create_blocks(column, column_id, blocks, plus_button)
+        self.change_highlight(self.current_highlight)
 
     def create_blocks(self, column, column_id, active_blocks, plus_button):
         for row_id in range(self.rows):
             if not row_id >= active_blocks:
                 ordinal_num = self.columns * row_id + column_id
                 self.create_true(column, f"{column_id}/{row_id}", ordinal_num)
-                self.block_states[f"{column_id}/{row_id}"] = True
             elif plus_button:
-                self.create_plus_button(column, "+")
-                self.block_states["+"] = True
+                self.create_plus_button(column, f"{column_id}/{row_id}")
                 plus_button = False
             else:
                 self.create_false(column, f"{column_id}/{row_id}")
-                self.block_states[f"{column_id}/{row_id}"] = False
 
     def create_true(self, column, block_id, ordinal_num):
         """Create a light block"""
-        block_base, block = super().create_block(column)
-        self.create_button(block, f"Level {ordinal_num+1}", block_base)
+        # Base
+        block_base, block = self.create_block(column)
+        # Main
+        text = f"Level {ordinal_num+1}"
+        self.create_button(block, text, block_base)
+        # Other
+        self.block_locations[text] = block_id
+        # Debug
         if self.debug:
             create_label(block, self.items[ordinal_num])
             create_label(block, ordinal_num)
@@ -272,25 +278,33 @@ class Blocklist(Create):
 
     def create_false(self, column, block_id):
         """Create a dark block"""
-        block = super().create_block(column, C1, C1)[1]
+        # Base
+        block = self.create_block(column, C1, C1)[1]
+        # Other
+        self.block_locations[block_id] = False
+        # Debug
         if self.debug:
             create_label(block, block_id, bg=C1, fg="lightgray")
 
     def create_plus_button(self, column, block_id):
-        block_base, block = super().create_block(column, C1, C1)
+        # Base
+        block_base, block = self.create_block(column, C1, C1)
+        # Main
         image = image_handler("+", "icons/Disabled.png", 125, 45)
         label = Label(block, image=images["+"], cursor="hand2", bg=C1)
         label.pack(side="top", fill="both", expand=True)
         label.bind("<Button-1>", lambda event: self.plus_function())
         label.bind("<Enter>", lambda event: block_base.config(bg=C4))
         label.bind("<Leave>", lambda event: block_base.config(bg=C1))
+        # Other
+        self.block_locations["+"] = block_id
 
     def plus_function(self):
         new_map()
-        self.refresh()
+        self.refresh(True)
 
     def create_button(self, frame, text, block_base):
-        # Other
+        # Base
         background = create_background(frame, "top", "both", True, C3)
         # Main
         button = Label(background, text=text, cursor="hand2")
@@ -304,25 +318,39 @@ class Blocklist(Create):
         return button
 
     def jump_point(self, text, block_base):
-        self.block_highlight(block_base)
+        self.current_level_id = int(text.split()[1])
+        self.block_highlight(text)
         jump_point(text)
 
-    def block_highlight(self, block_base):
+    def block_highlight(self, text):
         if self.current_highlight:
-            self.current_highlight.config(bg=C2)
-        block_base.config(bg=C4)
-        self.current_highlight = block_base
+            block_id = self.current_highlight
+            self.change_highlight(block_id, C2)
+        block_id = self.block_locations[text]
+        self.change_highlight(block_id, C4)
+        self.current_highlight = block_id
 
-    def refresh(self):
+    def change_highlight(self, block_id, bg=C4):
+        if not block_id:
+            return
+        column_id, row_id = list(map(int, block_id.split("/")))
+        column = self.frame.slaves()[column_id]
+        block = column.slaves()[row_id]
+        block.config(bg=bg)
+
+    def refresh(self, keep_highlight=False):
         for item in self.frame.slaves():
             item.destroy()
-        Blocklist(self.frame, load_maps())
+        if not keep_highlight:
+            self.current_highlight = None
+        self.items = load_maps()
+        self.create_grid(self.frame, len(self.items))
 
 class CreateMap(Create):
 
     def __init__(self, frame, level_id):
         super().__init__(frame)
-        self.level_id = level_id
+        self.level_id = int(level_id)
         self.paint_type = 1
         self.map_data = self.load_data()["Map"]
         self.load_map()
@@ -342,7 +370,8 @@ class CreateMap(Create):
                 create_button(block, f"{column_id}/{row_id}", fg=C3)
 
     def load_data(self):
-        with open(f"maps/level_{self.level_id}.json") as data:
+        file_name = load_maps()[self.level_id - 1]
+        with open(f"maps/{file_name}") as data:
             data = json.load(data)
         return data
 
@@ -379,7 +408,8 @@ def load_maps():
     return maps
 
 def new_map():
-    map_id = len(load_maps()) + 1
+    # JL6079
+    map_id = int(load_maps()[-1].strip("level_.json"))+1
     print(f"creating new map file level_{map_id}.json")
 
     with open("maps/map_template.json") as data:
@@ -409,10 +439,14 @@ def jump_point(text, toggle=False):
         case ["Back"]:
             switch_frame("Mainmenu")
         case ["Level", level_id]:
-            switch_sidebar("Level info", level_id)
+            switch_sidebar("Level info", int(level_id))
         case ["Load", "map"]:
             level_id = sidebar.slaves()[1].cget("text").split()[1]
             switch_frame("Load map", level_id)
+        case ["Delete", "map"]:
+            file_name = load_maps()[maplist.current_level_id - 1]
+            os.remove(f"maps/{file_name}")
+            jump_point("Refresh")
         case [column, "id", row]:
             print(f"{column}/{row}")
             column, row = int(column), int(row)
@@ -423,7 +457,8 @@ def jump_point(text, toggle=False):
             mapgrid.paint_type = paint_type
             sidebar.slaves()[3].config(text=f"Selected paint: {paint_type}")
         case ["Save", "changes"]:
-            with open(f"maps/level_{mapgrid.level_id}.json", "w") as file:
+            file_name = load_maps()[mapgrid.level_id - 1]
+            with open(f"maps/{file_name}", "w") as file:
                 json.dump({"Map": mapgrid.map_data}, file, indent=4)
         case ["Toggle", *text]:
             text = " ".join(text)
@@ -465,6 +500,7 @@ def switch_sidebar(frame, level_id=False):
         create_label(sidebar, "something")
         create_label(sidebar, "", bg=C2)
         create_button(sidebar, ("Load map", 15), expand=False)
+        create_button(sidebar, ("Delete map", 15), expand=False)
         create_button(sidebar, ("Quit", 15), "left")
         create_button(sidebar, ("Refresh", 15), "left")
     elif frame == "Load map":
@@ -481,7 +517,8 @@ def switch_sidebar(frame, level_id=False):
         create_button(sidebar, ("Back", 15), "left")
 
 def load_map_info(level_id):
-    with open(f"maps/level_{level_id}.json") as data:
+    file_name = load_maps()[level_id - 1]
+    with open(f"maps/{file_name}") as data:
         data = json.load(data)
     map_size = f"{len(data['Map'])}x{len(data['Map'][0])}"
     return map_size, 0
