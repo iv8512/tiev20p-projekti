@@ -380,17 +380,8 @@ class CreateMap(Create):
         for column_id, column_data in enumerate(self.map_data):
             column = super().create_column(self.frame)
             for row_id, row_data in enumerate(column_data):
-                if row_data == 0:
-                    block = self.create_block(column, C2)
-                elif row_data == 1:
-                    block = self.create_block(column, C6)
-                elif row_data == 2:
-                    block = self.create_block(column, C8)
-                elif row_data == 3:
-                    block = self.create_block(column, C2)
-                    create_button(block, f"{column_id}/{row_id}", bg=C7, fg=C7)
-                    continue
-                create_button(block, f"{column_id}/{row_id}", fg=C3)
+                block = self.create_block(column, C2)
+                self.colour_match(row_data, f"{column_id}/{row_id}", block)
 
     def load_data(self):
         file_name = load_maps()[self.level_id - 1]
@@ -408,17 +399,31 @@ class CreateMap(Create):
         column = mainframe.slaves()[column_id]
         block = column.slaves()[row_id]
         clear_frame(block)
-        if self.paint_type == 0:
-            block.config(bg=C2)
-        elif self.paint_type == 1:
-            block.config(bg=C6)
-        elif self.paint_type == 2:
-            block.config(bg=C8)
-        elif self.paint_type == 3:
-            block.config(bg=C2)
-            create_button(block, f"{column_id}/{row_id}", bg=C7, fg=C7)
-            return
-        create_button(block, f"{column_id}/{row_id}", fg=C3)
+        self.colour_match(self.paint_type, f"{column_id}/{row_id}", block)
+
+    def colour_match(self, block_type, block_id, block):
+        match block_type:
+            case "None":
+                block.config(bg=C2)
+            case "Hole":
+                block.config(bg=C1)
+                create_button(block, block_id, bg=C1, fg=C1)
+                return
+            case "Wall":
+                block.config(bg=C6)
+            case "Player":
+                block.config(bg=C8)
+            case "Enemy":
+                block.config(bg=C8)
+            case "Apple":
+                block.config(bg=C2)
+                create_button(block, block_id, bg=C7, fg=C7)
+                return
+            case _:
+                block.config(bg="#f847f5")
+                create_button(block, block_id, bg="black", fg="#f847f5")
+                return
+        create_button(block, block_id, fg=C3)
 
 def multiple(obj_type, amount, frame=True):
     if frame:
@@ -456,7 +461,7 @@ def check_map(level_id):
     with open(f"maps/{file_name}") as data:
         map_data = json.load(data)["Map"]
     for column_data in map_data:
-        if not len(column_data) == column_data.count(0):
+        if not len(column_data) == column_data.count("None"):
             return False
     return True
 
@@ -497,8 +502,8 @@ def jump_point(text, toggle=False):
             column, row = int(column), int(row)
             mapgrid.change_colour(column, row)
             mapgrid.map_data[column][row] = mapgrid.paint_type
-        case ["Paint", "type", paint_type]:
-            paint_type = int(paint_type)
+        case ["Paint", "type", *paint_type]:
+            paint_type = " ".join(paint_type)
             mapgrid.paint_type = paint_type
             sidebar.slaves()[3].config(text=f"Selected paint: {paint_type}")
         case ["Save", "changes"]:
@@ -555,10 +560,13 @@ def switch_sidebar(frame, level_id=False):
         create_label(sidebar, (f"Level {level_id}", 15), expand=False, bg=C2)
         create_label(sidebar, "", bg=C2)
         create_label(sidebar, ("Selected paint: 1", 15), expand=False)
-        create_button(sidebar, "Paint type 0", expand=False)
-        create_button(sidebar, "Paint type 1", expand=False)
-        create_button(sidebar, "Paint type 2", expand=False)
-        create_button(sidebar, "Paint type 3", expand=False)
+        create_button(sidebar, "Paint type None", expand=False)
+        create_button(sidebar, "Paint type Hole", expand=False)
+        create_button(sidebar, "Paint type Wall", expand=False)
+        create_button(sidebar, "Paint type Player", expand=False)
+        create_button(sidebar, "Paint type Enemy", expand=False)
+        create_button(sidebar, "Paint type Apple", expand=False)
+        create_button(sidebar, "Paint type Next level", expand=False)
         create_label(sidebar, "", bg=C2)
         create_button(sidebar, ("Save changes", 15), expand=False)
         create_button(sidebar, ("Back", 15), "left")
