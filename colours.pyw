@@ -1,6 +1,6 @@
 import json
 
-with open("settings.json") as data:
+with open("data/settings.json") as data:
     settings = json.load(data)
 
 C1 = settings["Colours"]["Current"]["C1"]
@@ -40,7 +40,7 @@ if __name__ == '__main__':
     right = Frame(root)
     right.pack(side="left", fill="both", expand=True)
 
-    with open("settings.json") as data:
+    with open("data/settings.json") as data:
         data = json.load(data)
 
     # Default Colours
