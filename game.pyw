@@ -393,7 +393,12 @@ def switch_sidebar(frame):
         create_button(Quit_border, ("Quit", 20), "bottom", expand=False, bg=C3)
 
     else:
-        create_label(sidebar, ("Pac-man", 50), "top", "x", True, C3)
+        create_label(sidebar, ("", 50), "top", "x", False, C2)
+        create_label(sidebar, ("???: ?", 25), "top", "x", False, C3)
+        create_label(sidebar, ("???: ?", 25), "top", "x", False, C3)
+        create_label(sidebar, ("???: ?", 25), "top", "x", False, C3)
+        create_label(sidebar, ("???: ?", 25), "top", "x", False, C3)
+        create_label(sidebar, ("", 50), "top", "x", False, C2)
         
         menu_bar = create_row(sidebar, fill="x", expand=False, bg=C3)
         create_button(menu_bar, ("Levels", 20), "top", "x", True, C3)
@@ -421,7 +426,7 @@ def position_handler(move=""):
     if movement_validator(move):
         return
     global current_pos
-    change_colour(current_pos[0], current_pos[1], "none")
+    change_colour(current_pos[0], current_pos[1], "None")
     if move == "w":
         current_pos[1] -= 1
     elif move == "a":
@@ -430,35 +435,50 @@ def position_handler(move=""):
         current_pos[1] += 1
     elif move == "d":
         current_pos[0] += 1
-    change_colour(current_pos[0], current_pos[1], "player")
-    position_label = sidebar.pack_slaves()[0]
-    string = f"{current_pos[0]}/{current_pos[1]} {len(apples)}/{moves}/{score}"
-    position_label.config(text=string)
+    change_colour(current_pos[0], current_pos[1], "Player")
+
+    sidebar_updater()
+    
+    if current_pos in holes:
+        switch_level(current_level, 0)
 
     if apples == []:
-            switch_level(current_level, 1)
+        switch_level(current_level, 1)
 
+def sidebar_updater():
+    position_label = sidebar.pack_slaves()[1]
+    position_label.config(text=f"Score: {score}")
+    position_label = sidebar.pack_slaves()[2]
+    position_label.config(text=f"Combo: {combo}")
+    position_label = sidebar.pack_slaves()[3]
+    position_label.config(text=f"Apples left: {len(apples)}")
+    position_label = sidebar.pack_slaves()[4]
+    position_label.config(text=f"Column: {current_pos[0]} Row: {current_pos[1]}")
 
 # TODO move this
 def block_update(column, row, block_type):
-    if block_type == 1:
-        change_colour(column, row, "wall")
+    if block_type == "Hole":
+        change_colour(column, row, block_type)
+        global holes
+        holes.append([column, row])
+    elif block_type == "Wall":
+        change_colour(column, row, block_type)
         global walls
         walls.append([column, row])
-    elif block_type == 2:
-        change_colour(column, row, "player")
+    elif block_type == "Player":
+        change_colour(column, row, block_type)
         movement_controls(column, row)
-    elif block_type == 3:
-        change_colour(column, row, "apple")
+    elif block_type == "Apple":
+        change_colour(column, row, block_type)
         global apples
         apples.append([column, row])
     else:
-        change_colour(column, row, "none")
+        change_colour(column, row, block_type)
 
 # TODO move this
 def load_map(level_id):
-    global walls, apples, moves, score, current_level
-    walls, apples, moves, score, current_level = [], [], 0, 0, level_id
+    global holes, walls, apples, combo, score, current_level
+    holes, walls, apples, combo, score, current_level = [], [], [], 0, 0, level_id
 
     file_name = load_maps()[int(level_id) - 1]
     with open(f"maps/{file_name}") as data:
@@ -468,6 +488,7 @@ def load_map(level_id):
     for column_index, column_data in enumerate(data["Map"]):
         for row_index, block in enumerate(column_data):
             block_update(column_index, row_index, block)
+    sidebar_updater()
 
 def switch_level(level_id, mod):
     global current_level, current_pos
@@ -504,39 +525,58 @@ def movement_validator(key):
 
     if new_pos in apples:
         score_system("eat", new_pos)
-    score_system("move", new_pos)
+    else:
+        score_system("move", new_pos)
 
 def score_system(action, position):
-    global apples, score, moves
+    global apples, score, combo
     
-    if action == "move":
-        moves = moves + 1
         
-    elif action == "eat":
+    if action == "eat":
         # add to points when apple is eaten
-        score = score + round(200 / (moves + 1))
+        score = math.floor(score + (50 + 5.5 * combo))
         # delete apple so it can't be eaten again
         apples.remove(position)
-        moves = 0
+        combo = combo + 3
+        
+    elif action == "move":
+        combo = max(combo - 1, 0)
+
+##def score_system(action, position):
+##    global apples, score, combo
+##    
+##    if action == "move":
+##        combo = combo + 1
+##        
+##    elif action == "eat":
+##        # add to points when apple is eaten
+##        score = score + round(200 / (combo + 1))
+##        # delete apple so it can't be eaten again
+##        apples.remove(position)
+##        combo = 0
 
 def change_colour(column, row, state):
     selected_column = mainframe.slaves()[column]
     # print(len(mainframe.slaves())) = 11
     item = selected_column.slaves()[row]
-    if state == "player":
-        item.config(bg=C8)
+    if state == "None":
+        item.config(bg=C2)
         item.slaves()[0].config(bg=C3)
-    elif state == "wall":
+    elif state == "Hole":
+        item.config(bg=C1)
+        item.slaves()[0].config(bg=C1)
+    elif state == "Wall":
         item.config(bg=C6)
         item.slaves()[0].config(bg=C3)
-    elif state == "apple":
+    elif state == "Player":
+        item.config(bg=C8)
+        item.slaves()[0].config(bg=C3)
+    elif state == "Apple":
         item.config(bg=C2)
         item.slaves()[0].config(bg=C7)
-    elif state == "none":
-        item.config(bg=C2)
-        item.slaves()[0].config(bg=C3)
     else:
         item.config(bg=C2)
+        item.slaves()[0].config(bg=C3)
 
 root.bind("<Escape>", quit) #sys.exit
 #root.iconbitmap("blume.ico")
