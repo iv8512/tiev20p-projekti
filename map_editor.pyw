@@ -321,17 +321,29 @@ class Blocklist(Create):
         return button
 
     def jump_point(self, text, block_base):
+        """Custom Blocklist jump point"""
+        block_id = self.block_locations[text]
+        # Toggle selection
+        if block_id == self.current_highlight:
+            self.deselect_block()
+            return
+        # Current level
         self.current_level_id = int(text.split()[1])
-        self.block_highlight(text)
+        # Change highlight
+        self.block_highlight(block_id)
+        # Jump point
         jump_point(text)
 
-    def block_highlight(self, text):
+    def block_highlight(self, new_block_id):
+        """Block highlight handler"""
+        # Check for active highlight
         if self.current_highlight:
+            # Remove old highlight
             block_id = self.current_highlight
             self.change_highlight(block_id, C2)
-        block_id = self.block_locations[text]
-        self.change_highlight(block_id, C4)
-        self.current_highlight = block_id
+        # Highlight new block
+        self.change_highlight(new_block_id, C4)
+        self.current_highlight = new_block_id
 
     def change_highlight(self, block_id, bg=C4):
         if not block_id:
@@ -340,6 +352,12 @@ class Blocklist(Create):
         column = self.frame.slaves()[column_id]
         block = column.slaves()[row_id]
         block.config(bg=bg)
+
+    def deselect_block(self):
+        self.change_highlight(self.current_highlight, C2)
+        self.current_highlight = None
+        self.current_level_id = None
+        switch_sidebar("Mainmenu")
 
     def refresh(self, keep_highlight=False):
         for item in self.frame.slaves():
