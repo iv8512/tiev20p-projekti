@@ -372,7 +372,7 @@ class CreateMap(Create):
     def __init__(self, frame, level_id):
         super().__init__(frame)
         self.level_id = int(level_id)
-        self.paint_type = 1
+        self.paint_type = "None"
         self.map_data = self.load_data()["Map"]
         self.load_map()
 
@@ -559,7 +559,7 @@ def switch_sidebar(frame, level_id=False):
         create_label(sidebar, ("Level info", 20), expand=False, bg=C2)
         create_label(sidebar, (f"Level {level_id}", 15), expand=False, bg=C2)
         create_label(sidebar, "", bg=C2)
-        create_label(sidebar, ("Selected paint: 1", 15), expand=False)
+        create_label(sidebar, ("Selected paint: None", 15), expand=False)
         create_button(sidebar, "Paint type None", expand=False)
         create_button(sidebar, "Paint type Hole", expand=False)
         create_button(sidebar, "Paint type Wall", expand=False)
