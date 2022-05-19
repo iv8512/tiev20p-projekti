@@ -478,6 +478,9 @@ def jump_point(text, toggle=False):
         case ["Refresh"]:
             maplist.refresh()
             switch_sidebar("Mainmenu")
+        case ["Switch", "to", "game"]:
+            os.startfile("game.pyw")
+            jump_point("Quit")
         case ["Back"]:
             switch_frame("Mainmenu")
         case ["Level", level_id]:
@@ -530,6 +533,7 @@ def switch_sidebar(frame, level_id=False):
     if frame == "Mainmenu":
         create_label(sidebar, ("Level info", 20), expand=False, bg=C2)
         create_label(sidebar, "Click on a map to continue", bg=C2)
+        create_button(sidebar, ("Switch to game", 15), "bottom", expand=False)
         create_button(sidebar, ("Quit", 15), "left")
         create_button(sidebar, ("Refresh", 15), "left")
     elif frame == "Level info":
@@ -543,6 +547,7 @@ def switch_sidebar(frame, level_id=False):
         create_label(sidebar, "", bg=C2)
         create_button(sidebar, ("Load map", 15), expand=False)
         create_button(sidebar, ("Delete map", 15), expand=False)
+        create_button(sidebar, ("Switch to game", 15), "bottom", expand=False)
         create_button(sidebar, ("Quit", 15), "left")
         create_button(sidebar, ("Refresh", 15), "left")
     elif frame == "Load map":
