@@ -191,6 +191,7 @@ class Blocklist(Create):
         self.rows = 6
         self.block_states = {}
         self.create_grid(frame, len(items))
+        print("cols :", self.columns, "rows: ", self.rows)
 
     def create_grid(self, frame, blocks):
         full_rows = math.floor(blocks/self.columns)
@@ -268,6 +269,7 @@ def load_maps():
                 data = json.load(data)
             maps.append(file)
     maps.sort(key=lambda f: int(''.join(filter(str.isdigit, f))))
+    print("maps loaded: ", len(maps))
     return maps
 
 def create_column(frame):
@@ -326,9 +328,8 @@ sidebar.pack_propagate(0)
 
 def startup():
     switch_frame("Mainmenu")
-    
-    global walls, apples
-    walls, apples = [], []
+    global current_level
+    current_level = 0
 
 def jump_point(text, toggle=False):
     match text.split():
@@ -337,9 +338,6 @@ def jump_point(text, toggle=False):
         case ["Back"]:
             switch_frame("Mainmenu")
         case ["Level", level_id]:
-            global walls, apples
-            walls = []
-            apples = []
             load_map(level_id)
         case ["Toggle", *text]:
             text = " ".join(text)
@@ -349,6 +347,9 @@ def jump_point(text, toggle=False):
             else:
                 image = image_handler(text, "Toggle Off.png")
             toggle.configure(image=image)
+        case ["Open", "editor"]:
+            os.startfile("map_editor.pyw")
+            quit()
         case _:
             print("clicked: ", text)
             switch_frame(text)
@@ -362,8 +363,11 @@ def switch_frame(frame):
         switch_sidebar(frame)
         create_mapgrid(mainframe)
         
-    elif frame == "LVL-Selector":
-        maplist = Blocklist(mainframe, load_maps())
+    elif frame == "Levels":
+        
+        mapframe = Frame(mainframe, borderwidth=0)
+        mapframe.pack(side="left", fill="both", expand=True)
+        maplist = Blocklist(mapframe, load_maps())
         
     elif frame == "Settings":
         #Settings_container = create_label(mainframe, "", "both", True, C3)
@@ -372,9 +376,6 @@ def switch_frame(frame):
         create_label(row_1, "testtest")
         create_label(row_2, "testtest")
 
-    elif frame == "LVL-1":
-        load_map(1)
-
 def switch_sidebar(frame):
     clear_frame(sidebar)
     if frame == "Mainmenu":
@@ -382,8 +383,9 @@ def switch_sidebar(frame):
         
         menu_bar = create_row(sidebar, fill="x", expand=False, bg=C3)
         create_button(menu_bar, ("Play", 20), "top", "x", True, C3)
-        create_button(menu_bar, ("LVL-Selector", 20), "top", "x", True, C3)
+        create_button(menu_bar, ("Levels", 20), "top", "x", True, C3)
         create_button(menu_bar, ("Settings", 20), "top", "x", True, C3)
+        create_button(menu_bar, ("Open editor", 20), "top", "x", True, C3)
 
         create_label(sidebar, "", "top", "x", True, C2)
 
@@ -394,8 +396,7 @@ def switch_sidebar(frame):
         create_label(sidebar, ("Pac-man", 50), "top", "x", True, C3)
         
         menu_bar = create_row(sidebar, fill="x", expand=False, bg=C3)
-        create_button(menu_bar, ("Play", 20), "top", "x", True, C3)
-        create_button(menu_bar, ("LVL-Selector", 20), "top", "x", True, C3)
+        create_button(menu_bar, ("Levels", 20), "top", "x", True, C3)
         create_button(menu_bar, ("Settings", 20), "top", "x", True, C3)
 
         create_label(sidebar, "", "top", "x", True, C2)
@@ -431,8 +432,11 @@ def position_handler(move=""):
         current_pos[0] += 1
     change_colour(current_pos[0], current_pos[1], "player")
     position_label = sidebar.pack_slaves()[0]
-    string = f"{current_pos[0]}/{current_pos[1]}/{len(apples)}"
+    string = f"{current_pos[0]}/{current_pos[1]} {len(apples)}/{moves}/{score}"
     position_label.config(text=string)
+
+    if apples == []:
+            switch_level(current_level, 1)
 
 
 # TODO move this
@@ -452,45 +456,68 @@ def block_update(column, row, block_type):
         change_colour(column, row, "none")
 
 # TODO move this
-def load_map(lvl_id):
-    with open(f"maps/level_{lvl_id}.json") as data:
+def load_map(level_id):
+    global walls, apples, moves, score, current_level
+    walls, apples, moves, score, current_level = [], [], 0, 0, level_id
+
+    file_name = load_maps()[int(level_id) - 1]
+    with open(f"maps/{file_name}") as data:
         data = json.load(data)
     switch_frame("Play")
-    print(f"loading level {lvl_id}")
+    print(f"loading {file_name, level_id}")
     for column_index, column_data in enumerate(data["Map"]):
         for row_index, block in enumerate(column_data):
             block_update(column_index, row_index, block)
+
+def switch_level(level_id, mod):
+    global current_level, current_pos
+    #add modifier to current level and load corresponding map
+    current_level = int(level_id) + mod
+    current_pos = []
     
+    load_map(current_level)
+
 def movement_validator(key):
     global walls, apples, current_pos
     if key == "w":
         # calculates position if move is made
         new_pos = [current_pos[0], current_pos[1] - 1]
-        # checks if new position is in an apple
-        if new_pos in apples:
-            apples.remove(new_pos)
         # checks if new position is invalid
         if new_pos in walls or current_pos[1] - 1 < 0:
             # returns True if you've hit a wall or the edge
             return True
+        
     elif key == "a":
         new_pos = [current_pos[0] - 1, current_pos[1]]
-        if new_pos in apples:
-            apples.remove(new_pos)
         if new_pos in walls or current_pos[0] - 1 < 0:
             return True
+        
     elif key == "s":
         new_pos = [current_pos[0], current_pos[1] + 1]
-        if new_pos in apples:
-            apples.remove(new_pos)
         if new_pos in walls or current_pos[1] + 1 > 10:
             return True
+        
     elif key == "d":
         new_pos = [current_pos[0] + 1, current_pos[1]]
-        if new_pos in apples:
-            apples.remove(new_pos)
         if new_pos in walls or current_pos[0] + 1 > 14:
             return True
+
+    if new_pos in apples:
+        score_system("eat", new_pos)
+    score_system("move", new_pos)
+
+def score_system(action, position):
+    global apples, score, moves
+    
+    if action == "move":
+        moves = moves + 1
+        
+    elif action == "eat":
+        # add to points when apple is eaten
+        score = score + round(200 / (moves + 1))
+        # delete apple so it can't be eaten again
+        apples.remove(position)
+        moves = 0
 
 def change_colour(column, row, state):
     selected_column = mainframe.slaves()[column]
