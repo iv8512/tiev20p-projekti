@@ -266,8 +266,11 @@ class Blocklist(Create):
         # Base
         block_base, block = self.create_block(column)
         # Main
-        text = f"Level {ordinal_num+1}"
-        self.create_button(block, text, block_base)
+        text = f"Level {ordinal_num + 1}"
+        if check_map(ordinal_num + 1):
+            self.create_button(block, text, block_base, fg="gray")
+        else:
+            self.create_button(block, text, block_base, fg="white")
         # Other
         self.block_locations[text] = block_id
         # Debug
@@ -303,13 +306,13 @@ class Blocklist(Create):
         new_map()
         self.refresh(True)
 
-    def create_button(self, frame, text, block_base):
+    def create_button(self, frame, text, block_base, fg="white"):
         # Base
         background = create_background(frame, "top", "both", True, C3)
         # Main
         button = Label(background, text=text, cursor="hand2")
         button.pack(side="top", fill="both", expand=True)
-        button.config(bg=C3, fg="white")
+        button.config(bg=C3, fg=fg)
         button.config(height=2, font=("TkDefaultFont", 15))
         button.bind("<Button-1>", lambda event: self.jump_point(text, block_base))
         # Hover effect
@@ -360,13 +363,15 @@ class CreateMap(Create):
             column = super().create_column(self.frame)
             for row_id, row_data in enumerate(column_data):
                 if row_data == 0:
-                    block = super().create_block(column, C2)[1]
+                    block = self.create_block(column, C2)
                 elif row_data == 1:
-                    block = super().create_block(column, C6)[1]
+                    block = self.create_block(column, C6)
                 elif row_data == 2:
-                    block = super().create_block(column, C8)[1]
+                    block = self.create_block(column, C8)
                 elif row_data == 3:
-                    block = super().create_block(column, C7)[1]
+                    block = self.create_block(column, C2)
+                    create_button(block, f"{column_id}/{row_id}", bg=C7, fg=C7)
+                    continue
                 create_button(block, f"{column_id}/{row_id}", fg=C3)
 
     def load_data(self):
@@ -375,9 +380,16 @@ class CreateMap(Create):
             data = json.load(data)
         return data
 
-    def change_colour(self, column, row):
-        column = mainframe.slaves()[column]
-        block = column.slaves()[row]
+    def create_block(self, column, bg):
+        block_base = Frame(column, borderwidth=5)
+        block_base.pack(side="top", fill="both", expand=True)
+        block_base.config(bg=bg)
+        return block_base
+
+    def change_colour(self, column_id, row_id):
+        column = mainframe.slaves()[column_id]
+        block = column.slaves()[row_id]
+        clear_frame(block)
         if self.paint_type == 0:
             block.config(bg=C2)
         elif self.paint_type == 1:
@@ -385,7 +397,10 @@ class CreateMap(Create):
         elif self.paint_type == 2:
             block.config(bg=C8)
         elif self.paint_type == 3:
-            block.config(bg=C7)
+            block.config(bg=C2)
+            create_button(block, f"{column_id}/{row_id}", bg=C7, fg=C7)
+            return
+        create_button(block, f"{column_id}/{row_id}", fg=C3)
 
 def multiple(obj_type, amount, frame=True):
     if frame:
@@ -417,6 +432,15 @@ def new_map():
     
     with open(f"maps/level_{map_id}.json", "w") as file:
         json.dump(data, file, indent=4)
+
+def check_map(level_id):
+    file_name = load_maps()[level_id - 1]
+    with open(f"maps/{file_name}") as data:
+        map_data = json.load(data)["Map"]
+    for column_data in map_data:
+        if not len(column_data) == column_data.count(0):
+            return False
+    return True
 
 """
 
