@@ -16,7 +16,7 @@ mainframe = Frame(root, borderwidth=10)
 mainframe.pack(side="left", fill="both", expand=True)
 mainframe.config(bg=C1)
 
-with open("info.json") as data:
+with open("data/info.json") as data:
     info_file = json.load(data)
 
 class InfoClass:
@@ -89,7 +89,7 @@ def create_label(frame, text, side="top", fill="both", expand=True, bg=C3, fg="w
     label.config(height=2, font=("TkDefaultFont", size))
     return label
 
-def create_button(frame, text, side="top", fill="both", expand=True, bg=C3, fg="white"):
+def create_button(frame, text, side="top", fill="both", expand=False, bg=C3, fg="white"):
     # Other
     text, size, state = text_handler(text)
     background = create_background(frame, side, fill, expand, bg)
@@ -364,7 +364,7 @@ class Blocklist(Create):
             item.destroy()
         if not keep_highlight:
             self.current_highlight = None
-        self.items = load_maps()
+        self.items = list_maps()
         self.create_grid(self.frame, len(self.items))
 
 class CreateMap(Create):
@@ -384,7 +384,7 @@ class CreateMap(Create):
                 self.colour_match(row_data, f"{column_id}/{row_id}", block)
 
     def load_data(self):
-        file_name = load_maps()[self.level_id - 1]
+        file_name = list_maps()[self.level_id - 1]
         with open(f"maps/{file_name}") as data:
             data = json.load(data)
         return data
@@ -393,6 +393,7 @@ class CreateMap(Create):
         block_base = Frame(column, borderwidth=5)
         block_base.pack(side="top", fill="both", expand=True)
         block_base.config(bg=bg)
+        block_base.pack_propagate(0)
         return block_base
 
     def change_colour(self, column_id, row_id):
@@ -405,25 +406,40 @@ class CreateMap(Create):
         match block_type:
             case "None":
                 block.config(bg=C2)
+                create_button(block, block_id, expand=True, fg=C3)
             case "Hole":
                 block.config(bg=C1)
-                create_button(block, block_id, bg=C1, fg=C1)
-                return
+                create_button(block, block_id, expand=True, bg=C1, fg=C1)
             case "Wall":
                 block.config(bg=C6)
+                create_button(block, block_id, expand=True, fg=C3)
             case "Player":
-                block.config(bg=C8)
+                self.image_button(block, block_id, "ghost.png", 160)
             case "Enemy":
-                block.config(bg=C8)
+                self.image_button(block, block_id, "pahis.png")
             case "Apple":
                 block.config(bg=C2)
-                create_button(block, block_id, bg=C7, fg=C7)
-                return
+                create_button(block, block_id, expand=True, bg=C7, fg=C7)
+            case "Next level":
+                block.config(bg=C2)
+                self.image_button(block, block_id, "door.png", 160)
             case _:
                 block.config(bg="#f847f5")
-                create_button(block, block_id, bg="black", fg="#f847f5")
-                return
-        create_button(block, block_id, fg=C3)
+                create_button(block, block_id, expand=True, bg="black", fg="#f847f5")
+
+    def image_button(self, frame, block_id, file_name, size=120):
+        image_handler(block_id, f"textures/{file_name}", size)
+        button = Label(frame, image=images[block_id], cursor="hand2", bg=C3)
+        button.pack(side="top", fill="both", expand=True)
+        button.bind("<Button-1>", lambda event: jump_point(block_id))
+
+    def clear_map(self):
+        for column_id, column_data in enumerate(self.map_data):
+            for row_id, block_type in enumerate(column_data):
+                if block_type != "None":
+                    self.map_data[column_id][row_id] = "None"
+        clear_frame(self.frame)
+        self.load_map()
 
 def multiple(obj_type, amount, frame=True):
     if frame:
@@ -433,21 +449,19 @@ def multiple(obj_type, amount, frame=True):
         items.append(obj_type(frame))
     return items
 
-def load_maps():
+def list_maps():
     maps = []
     for path, folders, files in os.walk("maps"):
-        for i, file in enumerate(files):
+        for file in files:
             if "template" in file:
                 continue
-            with open(f"maps/{file}") as data:
-                data = json.load(data)
             maps.append(file)
     maps.sort(key=lambda f: int(''.join(filter(str.isdigit, f))))
     return maps
 
 def new_map():
     # JL6079
-    map_id = int(load_maps()[-1].strip("level_.json"))+1
+    map_id = int(list_maps()[-1].strip("level_.json"))+1
     print(f"creating new map file level_{map_id}.json")
 
     with open("maps/map_template.json") as data:
@@ -457,7 +471,7 @@ def new_map():
         json.dump(data, file, indent=4)
 
 def check_map(level_id):
-    file_name = load_maps()[level_id - 1]
+    file_name = list_maps()[level_id - 1]
     with open(f"maps/{file_name}") as data:
         map_data = json.load(data)["Map"]
     for column_data in map_data:
@@ -494,7 +508,7 @@ def jump_point(text, toggle=False):
             level_id = sidebar.slaves()[1].cget("text").split()[1]
             switch_frame("Load map", level_id)
         case ["Delete", "map"]:
-            file_name = load_maps()[maplist.current_level_id - 1]
+            file_name = list_maps()[maplist.current_level_id - 1]
             os.remove(f"maps/{file_name}")
             jump_point("Refresh")
         case [column, "id", row]:
@@ -506,8 +520,10 @@ def jump_point(text, toggle=False):
             paint_type = " ".join(paint_type)
             mapgrid.paint_type = paint_type
             sidebar.slaves()[3].config(text=f"Selected paint: {paint_type}")
+        case ["Clear", "map"]:
+            mapgrid.clear_map()
         case ["Save", "changes"]:
-            file_name = load_maps()[mapgrid.level_id - 1]
+            file_name = list_maps()[mapgrid.level_id - 1]
             with open(f"maps/{file_name}", "w") as file:
                 json.dump({"Map": mapgrid.map_data}, file, indent=4)
         case ["Toggle", *text]:
@@ -526,7 +542,7 @@ def switch_frame(frame, level_id=False):
     clear_frame(mainframe)
     if frame == "Mainmenu":
         global maplist
-        maplist = Blocklist(mainframe, load_maps())
+        maplist = Blocklist(mainframe, list_maps())
         switch_sidebar(frame)
     elif frame == "Load map":
         global mapgrid
@@ -538,9 +554,9 @@ def switch_sidebar(frame, level_id=False):
     if frame == "Mainmenu":
         create_label(sidebar, ("Level info", 20), expand=False, bg=C2)
         create_label(sidebar, "Click on a map to continue", bg=C2)
-        create_button(sidebar, ("Switch to game", 15), "bottom", expand=False)
-        create_button(sidebar, ("Quit", 15), "left")
-        create_button(sidebar, ("Refresh", 15), "left")
+        create_button(sidebar, ("Switch to game", 15), "bottom")
+        create_button(sidebar, ("Quit", 15), "left", expand=True)
+        create_button(sidebar, ("Refresh", 15), "left", expand=True)
     elif frame == "Level info":
         create_label(sidebar, ("Level info", 20), expand=False, bg=C2)
         create_label(sidebar, (f"Level {level_id}", 15), expand=False, bg=C2)
@@ -550,29 +566,31 @@ def switch_sidebar(frame, level_id=False):
         create_label(sidebar, "{high_score}")
         create_label(sidebar, "something")
         create_label(sidebar, "", bg=C2)
-        create_button(sidebar, ("Load map", 15), expand=False)
-        create_button(sidebar, ("Delete map", 15), expand=False)
-        create_button(sidebar, ("Switch to game", 15), "bottom", expand=False)
-        create_button(sidebar, ("Quit", 15), "left")
-        create_button(sidebar, ("Refresh", 15), "left")
+        create_button(sidebar, ("Load map", 15))
+        create_button(sidebar, ("Delete map", 15))
+        create_button(sidebar, ("Switch to game", 15), "bottom")
+        create_button(sidebar, ("Quit", 15), "left", expand=True)
+        create_button(sidebar, ("Refresh", 15), "left", expand=True)
     elif frame == "Load map":
         create_label(sidebar, ("Level info", 20), expand=False, bg=C2)
         create_label(sidebar, (f"Level {level_id}", 15), expand=False, bg=C2)
         create_label(sidebar, "", bg=C2)
         create_label(sidebar, ("Selected paint: None", 15), expand=False)
-        create_button(sidebar, "Paint type None", expand=False)
-        create_button(sidebar, "Paint type Hole", expand=False)
-        create_button(sidebar, "Paint type Wall", expand=False)
-        create_button(sidebar, "Paint type Player", expand=False)
-        create_button(sidebar, "Paint type Enemy", expand=False)
-        create_button(sidebar, "Paint type Apple", expand=False)
-        create_button(sidebar, "Paint type Next level", expand=False)
+        create_button(sidebar, "Paint type None")
+        create_button(sidebar, "Paint type Hole")
+        create_button(sidebar, "Paint type Wall")
+        create_button(sidebar, "Paint type Player")
+        create_button(sidebar, "Paint type Enemy")
+        create_button(sidebar, "Paint type Apple")
+        create_button(sidebar, "Paint type Next level")
+        create_label(sidebar, "", expand=False, bg=C2)
+        create_button(sidebar, ("Clear map", 15))
         create_label(sidebar, "", bg=C2)
-        create_button(sidebar, ("Save changes", 15), expand=False)
-        create_button(sidebar, ("Back", 15), "left")
+        create_button(sidebar, ("Save changes", 15))
+        create_button(sidebar, ("Back", 15))
 
 def load_map_info(level_id):
-    file_name = load_maps()[level_id - 1]
+    file_name = list_maps()[level_id - 1]
     with open(f"maps/{file_name}") as data:
         data = json.load(data)
     map_size = f"{len(data['Map'])}x{len(data['Map'][0])}"
