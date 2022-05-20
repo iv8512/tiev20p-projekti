@@ -414,8 +414,10 @@ class CreateMap(Create):
                 block.config(bg=C6)
                 create_button(block, block_id, expand=True, fg=C3)
             case "Player":
+                block.config(bg=C2)
                 self.image_button(block, block_id, "ghost.png", 160)
             case "Enemy":
+                block.config(bg=C2)
                 self.image_button(block, block_id, "pahis.png")
             case "Apple":
                 block.config(bg=C2)
@@ -440,6 +442,57 @@ class CreateMap(Create):
                     self.map_data[column_id][row_id] = "None"
         clear_frame(self.frame)
         self.load_map()
+
+class CreateToolbar(Create):
+
+    def __init__(self, frame):
+        super().__init__(frame)
+        self.paint_label = None
+        self.create()
+
+    def create(self):
+        self.frame = create_frame(self.frame)
+        self.info_panel()
+        create_label(self.frame, "", expand=False, bg=C2)
+        self.paint_selector()
+        create_label(self.frame, "", expand=False, bg=C2)
+        create_button(self.frame, ("Clear map", 15))
+
+    def info_panel(self):
+        create_label(self.frame, ("Info", 15), expand=False)
+        create_label(self.frame, "Object count", expand=False)
+
+    def paint_selector(self):
+        self.paint_label = create_label(self.frame, ("Selected paint: None", 15), expand=False)
+        frame = create_frame(self.frame, expand=False)
+        self.create_button(frame, "None", "left", True)
+        self.create_button(frame, "Hole", "left", True)
+        self.create_button(frame, "Wall", "left", True)
+        frame = create_frame(self.frame, expand=False)
+        self.create_button(frame, "Player", "left", True)
+        self.create_button(frame, "Enemy", "left", True)
+        frame = create_frame(self.frame, expand=False)
+        self.create_button(frame, "Apple", "left", True)
+        self.create_button(frame, "Next level", "left", True)
+
+    def create_button(self, frame, text, side="top", expand=False):
+        # Other
+        text, size, state = text_handler(text)
+        background = create_background(frame, side, "both", expand, C3)
+        # Main
+        button = Label(background, text=text, state=state, cursor="hand2")
+        button.pack(side=side, fill="both", expand=True)
+        button.config(bg=C3, fg="white")
+        button.config(height=2, font=("TkDefaultFont", size))
+        button.bind("<Button-1>", lambda event: self.jump_point(text))
+        # Hover effect
+        button.bind("<Enter>", lambda event: background.config(bg=C4))
+        button.bind("<Leave>", lambda event: background.config(bg=C3))
+        return button
+
+    def jump_point(self, paint_type):
+        mapgrid.paint_type = paint_type
+        self.paint_label.config(text=f"Selected paint: {paint_type}")
 
 def multiple(obj_type, amount, frame=True):
     if frame:
@@ -516,10 +569,6 @@ def jump_point(text, toggle=False):
             column, row = int(column), int(row)
             mapgrid.change_colour(column, row)
             mapgrid.map_data[column][row] = mapgrid.paint_type
-        case ["Paint", "type", *paint_type]:
-            paint_type = " ".join(paint_type)
-            mapgrid.paint_type = paint_type
-            sidebar.slaves()[3].config(text=f"Selected paint: {paint_type}")
         case ["Clear", "map"]:
             mapgrid.clear_map()
         case ["Save", "changes"]:
@@ -575,16 +624,7 @@ def switch_sidebar(frame, level_id=False):
         create_label(sidebar, ("Level info", 20), expand=False, bg=C2)
         create_label(sidebar, (f"Level {level_id}", 15), expand=False, bg=C2)
         create_label(sidebar, "", bg=C2)
-        create_label(sidebar, ("Selected paint: None", 15), expand=False)
-        create_button(sidebar, "Paint type None")
-        create_button(sidebar, "Paint type Hole")
-        create_button(sidebar, "Paint type Wall")
-        create_button(sidebar, "Paint type Player")
-        create_button(sidebar, "Paint type Enemy")
-        create_button(sidebar, "Paint type Apple")
-        create_button(sidebar, "Paint type Next level")
-        create_label(sidebar, "", expand=False, bg=C2)
-        create_button(sidebar, ("Clear map", 15))
+        CreateToolbar(sidebar)
         create_label(sidebar, "", bg=C2)
         create_button(sidebar, ("Save changes", 15))
         create_button(sidebar, ("Back", 15))
