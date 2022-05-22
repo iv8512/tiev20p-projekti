@@ -6,7 +6,7 @@ from PIL import ImageTk, Image
 
 root = Tk()
 
-with open("info.json") as data:
+with open("data/info.json") as data:
     info_file = json.load(data)
 
 class InfoClass:
@@ -136,9 +136,8 @@ def create_toggle_image(background, text, expand, file="Toggle On.png"):
 
 def image_handler(text, file, size=40, rotation=0):
     # JL6079
-    image = Image.open(file).convert("RGBA")
+    image = Image.open(file).convert("RGBA").rotate(rotation)
     image = image.resize((size, size), Image.Resampling.LANCZOS)
-    image = image.rotate(rotation)
     image = ImageTk.PhotoImage(image)
     global images
     images[text] = image
@@ -350,6 +349,8 @@ def jump_point(text, toggle=False):
         case ["Open", "editor"]:
             os.startfile("map_editor.pyw")
             quit()
+        case ["Reset", "save", "data"]:
+            save_data("reset")
         case _:
             print("clicked: ", text)
             switch_frame(text)
@@ -386,6 +387,7 @@ def switch_sidebar(frame):
         create_button(menu_bar, ("Levels", 20), "top", "x", True, C3)
         create_button(menu_bar, ("Settings", 20), "top", "x", True, C3)
         create_button(menu_bar, ("Open editor", 20), "top", "x", True, C3)
+        create_button(menu_bar, ("Reset save data", 20), "top", "x", True, C3)
 
         create_label(sidebar, "", "top", "x", True, C2)
 
@@ -394,6 +396,7 @@ def switch_sidebar(frame):
 
     else:
         create_label(sidebar, ("", 50), "top", "x", False, C2)
+        create_label(sidebar, ("level ?", 25), "top", "x", False, C3)
         create_label(sidebar, ("???: ?", 25), "top", "x", False, C3)
         create_label(sidebar, ("???: ?", 25), "top", "x", False, C3)
         create_label(sidebar, ("???: ?", 25), "top", "x", False, C3)
@@ -446,14 +449,17 @@ def position_handler(move=""):
         switch_level(current_level, 1)
 
 def sidebar_updater():
+    # JL6079
     position_label = sidebar.pack_slaves()[1]
-    position_label.config(text=f"Score: {score}")
+    position_label.config(text=f"Level {current_level}")
     position_label = sidebar.pack_slaves()[2]
-    position_label.config(text=f"Combo: {combo}")
+    position_label.config(text=f"Score: {score}")
     position_label = sidebar.pack_slaves()[3]
-    position_label.config(text=f"Apples left: {len(apples)}")
+    position_label.config(text=f"Combo: {combo}")
     position_label = sidebar.pack_slaves()[4]
-    position_label.config(text=f"Column: {current_pos[0]} Row: {current_pos[1]}")
+    position_label.config(text=f"Apples left: {len(apples)}")
+    position_label = sidebar.pack_slaves()[5]
+    position_label.config(text=f"Column: {current_pos[0]}  Row: {current_pos[1]}")
 
 # TODO move this
 def block_update(column, row, block_type):
@@ -472,13 +478,17 @@ def block_update(column, row, block_type):
         change_colour(column, row, block_type)
         global apples
         apples.append([column, row])
+    elif block_type == "Next level":
+        change_colour(column, row, block_type)
+        global next_level
+        next_level.append([column, row])
     else:
         change_colour(column, row, block_type)
 
 # TODO move this
 def load_map(level_id):
-    global holes, walls, apples, combo, score, current_level
-    holes, walls, apples, combo, score, current_level = [], [], [], 0, 0, level_id
+    global holes, walls, apples, next_level, combo, score, current_level
+    holes, walls, apples, next_level, combo, score, current_level = [], [], [], [], 0, 0, level_id
 
     file_name = load_maps()[int(level_id) - 1]
     with open(f"maps/{file_name}") as data:
@@ -491,14 +501,41 @@ def load_map(level_id):
     sidebar_updater()
 
 def switch_level(level_id, mod):
+    # JL6079
+    save_data("score")
     global current_level, current_pos
-    #add modifier to current level and load corresponding map
+    # add modifier to current level and load corresponding map
     current_level = int(level_id) + mod
-    current_pos = []
+    current_pos = [] 
     
     load_map(current_level)
 
+def save_data(action):
+    match action:
+        case "score":
+            with open("data/saved_data.json", "r") as file:
+                data = json.load(file)
+
+            # fetches old top score for the current level from saved_data.json
+            try:
+                old_score = data[f"Level {current_level}"]["score"]
+            except:
+                old_score = 0
+
+            # replace old score if new score is higher than the old one
+            if old_score < score:
+                data[f"Level {current_level}"] = {"score": score}
+
+            with open("data/saved_data.json", "w") as file:
+                json.dump(data, file, indent = 4)
+        case "reset":
+            data = {}
+            with open("data/saved_data.json", "w") as file:
+                json.dump(data, file, indent = 4)
+            
+
 def movement_validator(key):
+    # JL6079
     global walls, apples, current_pos
     if key == "w":
         # calculates position if move is made
@@ -525,12 +562,14 @@ def movement_validator(key):
 
     if new_pos in apples:
         score_system("eat", new_pos)
+    elif new_pos in next_level:
+        switch_level(current_level, 1)
     else:
         score_system("move", new_pos)
 
 def score_system(action, position):
+    # JL6079
     global apples, score, combo
-    
         
     if action == "eat":
         # add to points when apple is eaten
@@ -574,6 +613,13 @@ def change_colour(column, row, state):
     elif state == "Apple":
         item.config(bg=C2)
         item.slaves()[0].config(bg=C7)
+    elif state == "Next level":
+##        item.config(bg=C1)
+##        item.slaves()[0].config(bg=C1)
+        item.pack_propagate(0)
+        door = image_handler(f"{column} {row}", "textures/door.png", 150, 0)
+        label = Label(item.slaves()[0], image = door)
+        label.pack()
     else:
         item.config(bg=C2)
         item.slaves()[0].config(bg=C3)
