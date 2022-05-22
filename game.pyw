@@ -143,6 +143,16 @@ def image_handler(text, file, size=40, rotation=0):
     images[text] = image
     return images[text]
 
+def get_image(file_name, size=90):
+    # IV8512
+    global loaded_images
+    if file_name in loaded_images:
+        return loaded_images[file_name]
+    else:
+        image = image_handler(file_name, f"textures/{file_name}", 90)
+        loaded_images[file_name] = image
+        return image
+
 def toggle_handler(text):
     global toggles
     if text not in toggles:
@@ -298,6 +308,7 @@ def create_square(row, i, side="top", border=5):
     frame2 = Frame(frame1)
     frame2.pack(side=side, fill="both", expand=True)
     frame2.config(bg=C3)
+    frame2.pack_propagate(0)
     # makes apples invisible
     # create_label(frame2, i)
 
@@ -327,8 +338,9 @@ sidebar.pack_propagate(0)
 
 def startup():
     switch_frame("Mainmenu")
-    global current_level
-    current_level = 0
+    global current_level, loaded_images
+    current_level, loaded_images = 0, {}
+    
 
 def jump_point(text, toggle=False):
     match text.split():
@@ -445,7 +457,6 @@ def position_handler(move=""):
     if current_pos in holes:
         switch_level(current_level, 0)
 
-    if apples == []:
         switch_level(current_level, 1)
 
 def sidebar_updater():
@@ -463,32 +474,29 @@ def sidebar_updater():
 
 # TODO move this
 def block_update(column, row, block_type):
-    if block_type == "Hole":
-        change_colour(column, row, block_type)
-        global holes
+    global hole, walls, apples, bananas, coins, next_level
+    if block_type == "Player":
+        movement_controls(column, row)
+    elif block_type == "Hole":
         holes.append([column, row])
     elif block_type == "Wall":
-        change_colour(column, row, block_type)
-        global walls
         walls.append([column, row])
-    elif block_type == "Player":
-        change_colour(column, row, block_type)
-        movement_controls(column, row)
+    elif block_type == "Enemy":
+        enemies.append([column, row])
     elif block_type == "Apple":
-        change_colour(column, row, block_type)
-        global apples
         apples.append([column, row])
+    elif block_type == "Banana":
+        bananas.append([column, row])
+    elif block_type == "Coin":
+        coins.append([column, row])
     elif block_type == "Next level":
-        change_colour(column, row, block_type)
-        global next_level
         next_level.append([column, row])
-    else:
-        change_colour(column, row, block_type)
+    change_colour(column, row, block_type)
 
 # TODO move this
 def load_map(level_id):
-    global holes, walls, apples, next_level, combo, score, current_level
-    holes, walls, apples, next_level, combo, score, current_level = [], [], [], [], 0, 0, level_id
+    global holes, walls, enemies, apples, bananas, coins, next_level, combo, score, current_level
+    holes, walls, enemies, apples, bananas, coins, next_level, combo, score, current_level = [], [], [], [], [], [], [], 0, 0, level_id
 
     file_name = load_maps()[int(level_id) - 1]
     with open(f"maps/{file_name}") as data:
@@ -569,30 +577,22 @@ def movement_validator(key):
 
 def score_system(action, position):
     # JL6079
-    global apples, score, combo
+    global apples, bananas, coins, score, combo
         
-    if action == "eat":
-        # add to points when apple is eaten
-        score = math.floor(score + (50 + 5.5 * combo))
-        # delete apple so it can't be eaten again
-        apples.remove(position)
+    if action == "eat_apple":
         combo = combo + 3
+        score = math.floor(score + (5 * combo))
+        apples.remove(position)
+    if action == "eat_banana":
+        combo = combo + 5
+        score = math.floor(score + (1 * combo))
+        bananas.remove(position)
+    if action == "eat_coin":
+        score = math.floor(score + max((100 * combo), 50))
+        coins.remove(position)
         
     elif action == "move":
         combo = max(combo - 1, 0)
-
-##def score_system(action, position):
-##    global apples, score, combo
-##    
-##    if action == "move":
-##        combo = combo + 1
-##        
-##    elif action == "eat":
-##        # add to points when apple is eaten
-##        score = score + round(200 / (combo + 1))
-##        # delete apple so it can't be eaten again
-##        apples.remove(position)
-##        combo = 0
 
 def change_colour(column, row, state):
     selected_column = mainframe.slaves()[column]
@@ -601,6 +601,7 @@ def change_colour(column, row, state):
     if state == "None":
         item.config(bg=C2)
         item.slaves()[0].config(bg=C3)
+        clear_frame(item.slaves()[0])
     elif state == "Hole":
         item.config(bg=C1)
         item.slaves()[0].config(bg=C1)
@@ -608,21 +609,32 @@ def change_colour(column, row, state):
         item.config(bg=C6)
         item.slaves()[0].config(bg=C3)
     elif state == "Player":
-        item.config(bg=C8)
-        item.slaves()[0].config(bg=C3)
+        clear_frame(item.slaves()[0])
+        image_block(item, column, row, "ghost.png")
+    elif state == "Enemy":
+        clear_frame(item.slaves()[0])
+        image_block(item, column, row, "pahis.png")
     elif state == "Apple":
-        item.config(bg=C2)
-        item.slaves()[0].config(bg=C7)
+        clear_frame(item.slaves()[0])
+        image_block(item, column, row, "apple.png")
+    elif state == "Banana":
+        clear_frame(item.slaves()[0])
+        image_block(item, column, row, "banana.png")
+    elif state == "Coin":
+        clear_frame(item.slaves()[0])
+        image_block(item, column, row, "kolikke.png")
     elif state == "Next level":
-##        item.config(bg=C1)
-##        item.slaves()[0].config(bg=C1)
-        item.pack_propagate(0)
-        door = image_handler(f"{column} {row}", "textures/door.png", 150, 0)
-        label = Label(item.slaves()[0], image = door)
-        label.pack()
+        clear_frame(item.slaves()[0])
+        image_block(item, column, row, "door.png")
     else:
         item.config(bg=C2)
         item.slaves()[0].config(bg=C3)
+
+def image_block(item, column, row, texture, size=100, rotation=0):
+    label = Label(item.slaves()[0], image = get_image(texture))
+    label.pack()
+    label.config(bg=C3)
+    
 
 root.bind("<Escape>", quit) #sys.exit
 #root.iconbitmap("blume.ico")
