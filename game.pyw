@@ -442,6 +442,7 @@ def position_handler(move=""):
         return
     global current_pos
     change_colour(current_pos[0], current_pos[1], "None")
+    enemy_move(current_pos)
     if move == "w":
         current_pos[1] -= 1
     elif move == "a":
@@ -457,7 +458,70 @@ def position_handler(move=""):
     if current_pos in holes:
         switch_level(current_level, 0)
 
+    if apples == [] and current_pos in next_level:
         switch_level(current_level, 1)
+
+def movement_validator(key):
+    # JL6079
+    if key == "w":
+        # calculates position if move is made
+        new_pos = [current_pos[0], current_pos[1] - 1]
+        # checks if new position is invalid
+        if new_pos in walls or current_pos[1] - 1 < 0:
+            # returns True if you've hit a wall or the edge
+            return True
+        
+    elif key == "a":
+        new_pos = [current_pos[0] - 1, current_pos[1]]
+        if new_pos in walls or current_pos[0] - 1 < 0:
+            return True
+        
+    elif key == "s":
+        new_pos = [current_pos[0], current_pos[1] + 1]
+        if new_pos in walls or current_pos[1] + 1 > 10:
+            return True
+        
+    elif key == "d":
+        new_pos = [current_pos[0] + 1, current_pos[1]]
+        if new_pos in walls or current_pos[0] + 1 > 14:
+            return True
+
+    if new_pos in apples:
+        score_system("eat_apple", new_pos)
+    elif new_pos in bananas:
+        score_system("eat_banana", new_pos)
+    elif new_pos in coins:
+        score_system("eat_coin", new_pos)
+    elif new_pos in enemies:
+        switch_level(current_level, 0)
+    else:
+        score_system("move", new_pos)
+
+def enemy_move(player_pos):
+    global enemies
+    print(len(enemies))
+    # compare if enemy is further away in columns or rows
+    for index, enemy in enumerate(enemies):
+        enemy_pos = enemies[index]
+        dist_columns = (enemy_pos[0] - current_pos[0])
+        dist_rows = (enemy_pos[1] - current_pos[1])
+        print("dist_rows: ", dist_rows, "dist_columns: ", dist_columns)
+        
+        if abs(dist_columns) > abs(dist_rows):
+            if dist_columns > 0:
+                block_update(enemy_pos[0]-1, enemy_pos[1], "Enemy")
+            else:
+                block_update(enemy_pos[0]+1, enemy_pos[1], "Enemy")
+        else:
+            if dist_rows < 0:
+                block_update(enemy_pos[0], enemy_pos[1]+1, "Enemy")
+            else:
+                block_update(enemy_pos[0], enemy_pos[1]-1, "Enemy")
+        
+        change_colour(enemy_pos[0], enemy_pos[1], "None")
+        enemies.remove([enemy_pos[0], enemy_pos[1]])
+            
+        
 
 def sidebar_updater():
     # JL6079
@@ -540,40 +604,6 @@ def save_data(action):
             data = {}
             with open("data/saved_data.json", "w") as file:
                 json.dump(data, file, indent = 4)
-            
-
-def movement_validator(key):
-    # JL6079
-    global walls, apples, current_pos
-    if key == "w":
-        # calculates position if move is made
-        new_pos = [current_pos[0], current_pos[1] - 1]
-        # checks if new position is invalid
-        if new_pos in walls or current_pos[1] - 1 < 0:
-            # returns True if you've hit a wall or the edge
-            return True
-        
-    elif key == "a":
-        new_pos = [current_pos[0] - 1, current_pos[1]]
-        if new_pos in walls or current_pos[0] - 1 < 0:
-            return True
-        
-    elif key == "s":
-        new_pos = [current_pos[0], current_pos[1] + 1]
-        if new_pos in walls or current_pos[1] + 1 > 10:
-            return True
-        
-    elif key == "d":
-        new_pos = [current_pos[0] + 1, current_pos[1]]
-        if new_pos in walls or current_pos[0] + 1 > 14:
-            return True
-
-    if new_pos in apples:
-        score_system("eat", new_pos)
-    elif new_pos in next_level:
-        switch_level(current_level, 1)
-    else:
-        score_system("move", new_pos)
 
 def score_system(action, position):
     # JL6079
