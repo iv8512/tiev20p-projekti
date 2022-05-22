@@ -421,7 +421,8 @@ class CreateMap(Create):
                 self.image_button(block, block_id, "pahis.png")
             case "Apple":
                 block.config(bg=C2)
-                create_button(block, block_id, expand=True, bg=C7, fg=C7)
+                #create_button(block, block_id, expand=True, bg=C7, fg=C7)
+                self.image_button(block, block_id, "apple.png", 90)
             case "Next level":
                 block.config(bg=C2)
                 self.image_button(block, block_id, "door.png", 160)
@@ -430,6 +431,7 @@ class CreateMap(Create):
                 create_button(block, block_id, expand=True, bg="black", fg="#f847f5")
 
     def image_button(self, frame, block_id, file_name, size=120):
+        #size = round(mainframe.winfo_height()/10)
         image_handler(block_id, f"textures/{file_name}", size)
         button = Label(frame, image=images[block_id], cursor="hand2", bg=C3)
         button.pack(side="top", fill="both", expand=True)
@@ -460,7 +462,7 @@ class CreateToolbar(Create):
 
     def info_panel(self):
         create_label(self.frame, ("Info", 15), expand=False)
-        create_label(self.frame, "Object count", expand=False)
+        create_label(self.frame, f"Apples: {self.object_count('Apple')}", expand=False)
 
     def paint_selector(self):
         self.paint_label = create_label(self.frame, ("Selected paint: None", 15), expand=False)
@@ -493,6 +495,12 @@ class CreateToolbar(Create):
     def jump_point(self, paint_type):
         mapgrid.paint_type = paint_type
         self.paint_label.config(text=f"Selected paint: {paint_type}")
+
+    def object_count(self, block_type):
+        block_count = 0
+        for column_data in mapgrid.map_data:
+            block_count += column_data.count(block_type)
+        return block_count
 
 def multiple(obj_type, amount, frame=True):
     if frame:
