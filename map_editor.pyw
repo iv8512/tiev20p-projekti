@@ -423,6 +423,12 @@ class CreateMap(Create):
                 block.config(bg=C2)
                 #create_button(block, block_id, expand=True, bg=C7, fg=C7)
                 self.image_button(block, block_id, "apple.png", 90)
+            case "Banana":
+                block.config(bg=C2)
+                self.image_button(block, block_id, "banana.png", 90)
+            case "Coin":
+                block.config(bg=C2)
+                self.image_button(block, block_id, "kolikke.png", 90)
             case "Next level":
                 block.config(bg=C2)
                 self.image_button(block, block_id, "door.png", 160)
@@ -475,6 +481,9 @@ class CreateToolbar(Create):
         self.create_button(frame, "Enemy", "left", True)
         frame = create_frame(self.frame, expand=False)
         self.create_button(frame, "Apple", "left", True)
+        self.create_button(frame, "Banana", "left", True)
+        self.create_button(frame, "Coin", "left", True)
+        frame = create_frame(self.frame, expand=False)
         self.create_button(frame, "Next level", "left", True)
 
     def create_button(self, frame, text, side="top", expand=False):
