@@ -194,6 +194,7 @@ class Create:
 
     def __init__(self, frame):
         self.frame = frame
+        self.__loaded_images = {}
 
     def create_column(self, frame):
         column = Frame(frame, borderwidth=0)
@@ -212,6 +213,14 @@ class Create:
         block.config(bg=fg)
         block.pack_propagate(0)
         return block_base, block
+
+    def get_image(self, file_name, size=90):
+        if file_name in self.__loaded_images:
+            return self.__loaded_images[file_name]
+        else:
+            image = image_handler(file_name, f"textures/{file_name}", 90)
+            self.__loaded_images[file_name] = image
+            return image
 
 class Blocklist(Create):
     
@@ -438,8 +447,10 @@ class CreateMap(Create):
 
     def image_button(self, frame, block_id, file_name, size=120):
         #size = round(mainframe.winfo_height()/10)
-        image_handler(block_id, f"textures/{file_name}", size)
-        button = Label(frame, image=images[block_id], cursor="hand2", bg=C3)
+##        image_handler(block_id, f"textures/{file_name}", size)
+##        button = Label(frame, image=images[block_id], cursor="hand2", bg=C3)
+        image = self.get_image(file_name)
+        button = Label(frame, image=image, cursor="hand2", bg=C3)
         button.pack(side="top", fill="both", expand=True)
         button.bind("<Button-1>", lambda event: jump_point(block_id))
 
