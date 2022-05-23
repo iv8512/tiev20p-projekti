@@ -497,16 +497,25 @@ def movement_validator(key):
     else:
         score_system("move", new_pos)
 
+def sidebar_updater():
+    # JL6079
+    position_label = sidebar.pack_slaves()[1]
+    position_label.config(text=f"Level {current_level}")
+    position_label = sidebar.pack_slaves()[2]
+    position_label.config(text=f"Score: {score}")
+    position_label = sidebar.pack_slaves()[3]
+    position_label.config(text=f"Combo: {combo}")
+    position_label = sidebar.pack_slaves()[4]
+    position_label.config(text=f"Apples left: {len(apples)}")
+    position_label = sidebar.pack_slaves()[5]
+    position_label.config(text=f"Column: {current_pos[0]}  Row: {current_pos[1]}")
+
 def enemy_move(player_pos):
     global enemies
-    print(len(enemies))
     # compare if enemy is further away in columns or rows
-    for index, enemy in enumerate(enemies):
-        enemy_pos = enemies[index]
+    for enemy_pos in enemies.copy():
         dist_columns = (enemy_pos[0] - current_pos[0])
         dist_rows = (enemy_pos[1] - current_pos[1])
-        print("dist_rows: ", dist_rows, "dist_columns: ", dist_columns)
-        
         if abs(dist_columns) > abs(dist_rows):
             if dist_columns > 0:
                 block_update(enemy_pos[0]-1, enemy_pos[1], "Enemy")
@@ -520,21 +529,6 @@ def enemy_move(player_pos):
         
         change_colour(enemy_pos[0], enemy_pos[1], "None")
         enemies.remove([enemy_pos[0], enemy_pos[1]])
-            
-        
-
-def sidebar_updater():
-    # JL6079
-    position_label = sidebar.pack_slaves()[1]
-    position_label.config(text=f"Level {current_level}")
-    position_label = sidebar.pack_slaves()[2]
-    position_label.config(text=f"Score: {score}")
-    position_label = sidebar.pack_slaves()[3]
-    position_label.config(text=f"Combo: {combo}")
-    position_label = sidebar.pack_slaves()[4]
-    position_label.config(text=f"Apples left: {len(apples)}")
-    position_label = sidebar.pack_slaves()[5]
-    position_label.config(text=f"Column: {current_pos[0]}  Row: {current_pos[1]}")
 
 # TODO move this
 def block_update(column, row, block_type):
