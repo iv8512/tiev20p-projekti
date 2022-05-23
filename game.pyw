@@ -409,7 +409,11 @@ def position_handler(move=""):
     if movement_validator(move):
         return
     global current_pos
-    change_colour(current_pos[0], current_pos[1], "None")
+    if current_pos in next_level:
+        clear_frame()
+        change_colour(current_pos[0], current_pos[1], "Next Level")
+    else:
+        change_colour(current_pos[0], current_pos[1], "None")
     enemy_move(current_pos)
     if move == "w":
         current_pos[1] -= 1
@@ -425,8 +429,9 @@ def position_handler(move=""):
     
     if current_pos in holes:
         switch_level(current_level, 0)
-
-    if apples == [] and current_pos in next_level:
+    elif apples == [] and current_pos in next_level:
+        switch_level(current_level, 1)
+    elif apples == [] and next_level == []:
         switch_level(current_level, 1)
 
 def movement_validator(key):
@@ -493,9 +498,18 @@ def enemy_move(player_pos):
             if dist_rows < 0:
                 block_update(enemy_pos[0], enemy_pos[1]+1, "Enemy")
             else:
-                block_update(enemy_pos[0], enemy_pos[1]-1, "Enemy")
-        
-        change_colour(enemy_pos[0], enemy_pos[1], "None")
+                block_update(enemy_pos[0], enemy_pos[1]-1, "Enemy")                
+
+        if enemy_pos in apples:
+            change_colour(enemy_pos[0], enemy_pos[1], "Apple")
+        elif enemy_pos in bananas:
+            change_colour(enemy_pos[0], enemy_pos[1], "Banana")
+        elif enemy_pos in coins:
+            change_colour(enemy_pos[0], enemy_pos[1], "Coin")
+        elif enemy_pos in next_level:
+            change_colour(enemy_pos[0], enemy_pos[1], "Next level")
+        else:
+            change_colour(enemy_pos[0], enemy_pos[1], "None")
         enemies.remove([enemy_pos[0], enemy_pos[1]])
 
 # TODO move this
@@ -536,7 +550,8 @@ def load_map(level_id):
 
 def switch_level(level_id, mod):
     # JL6079
-    save_data("score")
+    if mod > 0:
+        save_data("score")
     global current_level, current_pos
     # add modifier to current level and load corresponding map
     current_level = int(level_id) + mod
@@ -558,7 +573,7 @@ def save_data(action):
 
             # replace old score if new score is higher than the old one
             if old_score < score:
-                data[f"Level {current_level}"] = {"score": score}
+                data[f"Level {current_level}"] = {"score": max(score, 1)}
 
             with open("data/saved_data.json", "w") as file:
                 json.dump(data, file, indent = 4)
