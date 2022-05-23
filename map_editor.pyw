@@ -640,7 +640,7 @@ def switch_sidebar(frame, level_id=False):
         create_label(sidebar, "", bg=C2)
         map_size, high_score = load_map_info(level_id)
         create_label(sidebar, (f"Map size: {map_size}", 13))
-        create_label(sidebar, "{high_score}")
+        create_label(sidebar, (f"High score: {high_score}", 13))
         create_label(sidebar, "something")
         create_label(sidebar, "", bg=C2)
         create_button(sidebar, ("Load map", 15))
@@ -662,7 +662,13 @@ def load_map_info(level_id):
     with open(f"maps/{file_name}") as data:
         data = json.load(data)
     map_size = f"{len(data['Map'])}x{len(data['Map'][0])}"
-    return map_size, 0
+    with open(f"data/saved_data.json") as data:
+        data = json.load(data)
+    try:
+        high_score = data[f"Level {level_id}"]["score"]
+    except KeyError:
+        high_score = 0
+    return map_size, high_score
 
 def clear_frame(*frames):
     for frame in frames:
