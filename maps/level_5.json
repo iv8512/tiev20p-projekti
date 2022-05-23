@@ -22,8 +22,8 @@
             "None",
             "Wall",
             "Coin",
-            "Enemy",
             "None",
+            "Enemy",
             "None"
         ],
         [
@@ -84,7 +84,7 @@
             "None",
             "Wall",
             "Hole",
-            "Enemy",
+            "None",
             "None",
             "Hole",
             "None",
@@ -97,7 +97,7 @@
             "None",
             "None",
             "None",
-            "None",
+            "Enemy",
             "None",
             "Wall",
             "Hole",
@@ -106,15 +106,15 @@
         ],
         [
             "None",
-            "Enemy",
             "None",
+            "Enemy",
             "Hole",
             "Wall",
             "Hole",
             "Hole",
             "Hole",
             "None",
-            "Enemy",
+            "None",
             "None"
         ],
         [
@@ -127,7 +127,7 @@
             "None",
             "Wall",
             "None",
-            "None",
+            "Enemy",
             "None"
         ],
         [

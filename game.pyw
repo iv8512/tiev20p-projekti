@@ -236,6 +236,16 @@ class Blocklist(Create):
             item.destroy()
         Blocklist(self.frame, load_maps())
 
+def play_btn():
+    with open(f"data/saved_data.json") as data:
+        data = json.load(data)
+    for i in range(1, len(load_maps())):
+        try:
+            data[f"Level {i}"]
+        except KeyError:
+            load_map(i)
+            return
+
 def load_maps():
     maps = []
     for path, folders, files in os.walk("maps"):
@@ -316,6 +326,8 @@ def jump_point(text, toggle=False):
             quit()
         case ["Back"]:
             switch_frame("Mainmenu")
+        case ["Play"]:
+            play_btn()
         case ["Level", level_id]:
             load_map(level_id)
         case ["Toggle", *text]:
@@ -409,11 +421,9 @@ def position_handler(move=""):
     if movement_validator(move):
         return
     global current_pos
-    if current_pos in next_level:
-        clear_frame()
-        change_colour(current_pos[0], current_pos[1], "Next Level")
-    else:
-        change_colour(current_pos[0], current_pos[1], "None")
+    change_colour(current_pos[0], current_pos[1], "None")
+        
+    
     enemy_move(current_pos)
     if move == "w":
         current_pos[1] -= 1
@@ -423,6 +433,8 @@ def position_handler(move=""):
         current_pos[1] += 1
     elif move == "d":
         current_pos[0] += 1
+    
+    # paint the new current_pos with player color
     change_colour(current_pos[0], current_pos[1], "Player")
 
     sidebar_updater()
@@ -443,20 +455,28 @@ def movement_validator(key):
         if new_pos in walls or current_pos[1] - 1 < 0:
             # returns True if you've hit a wall or the edge
             return True
+        elif new_pos in next_level and apples != []:
+            return True
         
     elif key == "a":
         new_pos = [current_pos[0] - 1, current_pos[1]]
-        if new_pos in walls or current_pos[0] - 1 < 0:
+        if new_pos in walls or new_pos[0] < 0:
+            return True
+        elif new_pos in next_level and apples != []:
             return True
         
     elif key == "s":
         new_pos = [current_pos[0], current_pos[1] + 1]
         if new_pos in walls or current_pos[1] + 1 > 10:
             return True
+        elif new_pos in next_level and apples != []:
+            return True
         
     elif key == "d":
         new_pos = [current_pos[0] + 1, current_pos[1]]
         if new_pos in walls or current_pos[0] + 1 > 14:
+            return True
+        elif new_pos in next_level and apples != []:
             return True
 
     if new_pos in apples:
@@ -499,8 +519,14 @@ def enemy_move(player_pos):
                 block_update(enemy_pos[0], enemy_pos[1]+1, "Enemy")
             else:
                 block_update(enemy_pos[0], enemy_pos[1]-1, "Enemy")                
-
-        if enemy_pos in apples:
+        item = mainframe.slaves()[enemy_pos[0]].slaves()[enemy_pos[1]]
+        if enemy_pos in holes:
+            change_colour(enemy_pos[0], enemy_pos[1], "Hole")
+            clear_frame(item.slaves()[0])
+        elif enemy_pos in walls:
+            change_colour(enemy_pos[0], enemy_pos[1], "Wall")
+            clear_frame(item.slaves()[0])
+        elif enemy_pos in apples:
             change_colour(enemy_pos[0], enemy_pos[1], "Apple")
         elif enemy_pos in bananas:
             change_colour(enemy_pos[0], enemy_pos[1], "Banana")
@@ -572,7 +598,7 @@ def save_data(action):
                 old_score = 0
 
             # replace old score if new score is higher than the old one
-            if old_score < score:
+            if old_score <= score:
                 data[f"Level {current_level}"] = {"score": max(score, 1)}
 
             with open("data/saved_data.json", "w") as file:
@@ -602,9 +628,7 @@ def score_system(action, position):
         combo = max(combo - 1, 0)
 
 def change_colour(column, row, state):
-    selected_column = mainframe.slaves()[column]
-    # print(len(mainframe.slaves())) = 11
-    item = selected_column.slaves()[row]
+    item = mainframe.slaves()[column].slaves()[row]
     if state == "None":
         item.config(bg=C2)
         item.slaves()[0].config(bg=C3)
