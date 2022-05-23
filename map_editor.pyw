@@ -479,7 +479,10 @@ class CreateToolbar(Create):
 
     def info_panel(self):
         create_label(self.frame, ("Info", 15), expand=False)
-        create_label(self.frame, f"Apples: {self.object_count('Apple')}", expand=False)
+        frame = create_frame(self.frame, expand=False)
+        create_label(frame, f"Apples: {self.object_count('Apple')}", "left", expand=True)
+        create_label(frame, f"Bananas: {self.object_count('Banana')}", "left", expand=True)
+        create_label(frame, f"Coins: {self.object_count('Coin')}", "left", expand=True)
 
     def paint_selector(self):
         self.paint_label = create_label(self.frame, ("Selected paint: None", 15), expand=False)
