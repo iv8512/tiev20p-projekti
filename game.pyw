@@ -327,6 +327,8 @@ def jump_point(text, toggle=False):
             switch_frame("Mainmenu")
         case ["Play"]:
             play_btn()
+        case ["Reset", "level"]:
+            switch_level(current_level, 0)
         case ["Level", level_id]:
             load_map(level_id)
         case ["Toggle", *text]:
@@ -342,6 +344,7 @@ def jump_point(text, toggle=False):
             quit()
         case ["Reset", "save", "data"]:
             save_data("reset")
+            switch_frame("Levels")
         case _:
             print("clicked: ", text)
             switch_frame(text)
@@ -360,12 +363,6 @@ def switch_frame(frame):
         mapframe = Frame(mainframe, borderwidth=0)
         mapframe.pack(side="left", fill="both", expand=True)
         maplist = Blocklist(mapframe, load_maps())
-    elif frame == "Settings":
-        #Settings_container = create_label(mainframe, "", "both", True, C3)
-        #Settings_section1 = create_label(Settings_container, "", "both", True, C3)
-        row_1, row_2 = create_row(mainframe), create_row(mainframe)
-        create_label(row_1, "testtest")
-        create_label(row_2, "testtest")
 
 def switch_sidebar(frame):
     clear_frame(sidebar)
@@ -375,7 +372,6 @@ def switch_sidebar(frame):
         menu_bar = create_row(sidebar, fill="x", expand=False, bg=C3)
         create_button(menu_bar, ("Play", 20), "top", "x", True, C3)
         create_button(menu_bar, ("Levels", 20), "top", "x", True, C3)
-        create_button(menu_bar, ("Settings", 20), "top", "x", True, C3)
         create_button(menu_bar, ("Open editor", 20), "top", "x", True, C3)
         create_button(menu_bar, ("Reset save data", 20), "top", "x", True, C3)
 
@@ -395,7 +391,7 @@ def switch_sidebar(frame):
         
         menu_bar = create_row(sidebar, fill="x", expand=False, bg=C3)
         create_button(menu_bar, ("Levels", 20), "top", "x", True, C3)
-        create_button(menu_bar, ("Settings", 20), "top", "x", True, C3)
+        create_button(menu_bar, ("Reset level", 20), "top", "x", True, C3)
 
         create_label(sidebar, "", "top", "x", True, C2)
 
