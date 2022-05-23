@@ -2,49 +2,8 @@ from tkinter import *
 from colours import *
 import json, math, os
 from PIL import ImageTk, Image
-#from interactables import *
 
 root = Tk()
-
-with open("data/info.json") as data:
-    info_file = json.load(data)
-
-class InfoClass:
-    
-    def __init__(self):
-        self.background = self.text_handler("background")
-        self.label = self.text_handler("label")
-        self.button = self.text_handler("button")
-        self.toggle = self.text_handler("toggle")
-        self.info = self.text_handler("info")
-        
-    def text_handler(self, item):
-        text = info_file["InfoClass"][item]
-        if ":" in text:
-            for marker in text.split(":"):
-                if marker in info_file["InfoClass"]:
-                    text = text.replace(f":{marker}:", info_file["InfoClass"][marker])
-                else:
-                    pass
-        return text
-
-    def colours(self):
-        for category in info_file["Colours"]:
-            print(category)
-            if type(info_file["Colours"][category]) == dict:
-                for name, colour in info_file["Colours"][category].items():
-                    print(f"  {name} {colour}")
-            else:
-                for colour in info_file["Colours"][category]:
-                    print(f"  {colour}")
-        
-info = InfoClass()
-
-"""
-
-START
-
-"""
 
 def create_background(frame, side, fill, expand, border=5, cursor=False):
     if cursor:
@@ -84,14 +43,14 @@ def create_label(frame, text, side="top", fill="both", expand=True, bg=C3):
     label.config(font=("TkDefaultFont", size))
     return label
 
-def create_button(frame, text, side="top", fill="both", expand=True, bg=C3):
+def create_button(frame, text, side="top", fill="both", expand=True, bg=C3, fg="white"):
     # Other
     text, size, state = text_handler(text)
     background = create_background(frame, side, fill, expand)
     # Main
     button = Label(background, text=text, state=state, cursor="hand2")
     button.pack(side=side, fill="both", expand=True)
-    button.config(bg=bg, fg="white")
+    button.config(bg=bg, fg=fg)
     button.config(height=2, font=("TkDefaultFont", size))
     button.bind("<Button-1>", lambda event: jump_point(text))
     # Hover effect
@@ -192,10 +151,7 @@ class Blocklist(Create):
     def __init__(self, frame, items, debug=False):
         super().__init__(frame)
         self.items = items
-        #self.include_plus_button = plus_button
         self.debug = debug
-        #self.columns = round(frame.winfo_width()/250)
-        #self.rows = round(frame.winfo_height()/250)
         self.columns = 9
         self.rows = 6
         self.block_states = {}
@@ -238,7 +194,10 @@ class Blocklist(Create):
     def create_true(self, column, block_id, ordinal_num):
         """Create a light block"""
         block = super().create_block(column)[1]
-        create_button(block, (f"Level {ordinal_num+1}", 15))
+        if self.check_map(ordinal_num + 1):
+            create_button(block, (f"Level {ordinal_num+1}", 15), fg=C8)
+        else:
+            create_button(block, (f"Level {ordinal_num+1}", 15))
         if self.debug:
             create_label(block, self.items[ordinal_num])
             create_label(block, ordinal_num)
@@ -262,6 +221,15 @@ class Blocklist(Create):
     def plus_function(self):
         new_map()
         self.refresh()
+
+    def check_map(self, level_id):
+        with open(f"data/saved_data.json") as data:
+            data = json.load(data)
+        try:
+            score = data[f"Level {level_id}"]
+            return True
+        except KeyError:
+            return False
 
     def refresh(self):
         for item in self.frame.slaves():
