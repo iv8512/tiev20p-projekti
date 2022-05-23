@@ -644,7 +644,6 @@ def switch_sidebar(frame, level_id=False):
         map_size, high_score = load_map_info(level_id)
         create_label(sidebar, (f"Map size: {map_size}", 13))
         create_label(sidebar, (f"High score: {high_score}", 13))
-        create_label(sidebar, "something")
         create_label(sidebar, "", bg=C2)
         create_button(sidebar, ("Load map", 15))
         create_button(sidebar, ("Delete map", 15))
