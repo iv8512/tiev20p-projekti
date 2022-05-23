@@ -319,7 +319,6 @@ def startup():
     global current_level, loaded_images
     current_level, loaded_images = 0, {}
     
-
 def jump_point(text, toggle=False):
     match text.split():
         case ["Quit"]:
@@ -361,7 +360,6 @@ def switch_frame(frame):
         mapframe = Frame(mainframe, borderwidth=0)
         mapframe.pack(side="left", fill="both", expand=True)
         maplist = Blocklist(mapframe, load_maps())
-        
     elif frame == "Settings":
         #Settings_container = create_label(mainframe, "", "both", True, C3)
         #Settings_section1 = create_label(Settings_container, "", "both", True, C3)
@@ -422,8 +420,7 @@ def position_handler(move=""):
         return
     global current_pos
     change_colour(current_pos[0], current_pos[1], "None")
-        
-    
+
     enemy_move(current_pos)
     if move == "w":
         current_pos[1] -= 1
@@ -433,12 +430,12 @@ def position_handler(move=""):
         current_pos[1] += 1
     elif move == "d":
         current_pos[0] += 1
-    
+
     # paint the new current_pos with player color
     change_colour(current_pos[0], current_pos[1], "Player")
 
     sidebar_updater()
-    
+
     if current_pos in holes:
         switch_level(current_level, 0)
     elif apples == [] and current_pos in next_level:
@@ -457,21 +454,21 @@ def movement_validator(key):
             return True
         elif new_pos in next_level and apples != []:
             return True
-        
+
     elif key == "a":
         new_pos = [current_pos[0] - 1, current_pos[1]]
         if new_pos in walls or new_pos[0] < 0:
             return True
         elif new_pos in next_level and apples != []:
             return True
-        
+
     elif key == "s":
         new_pos = [current_pos[0], current_pos[1] + 1]
         if new_pos in walls or current_pos[1] + 1 > 10:
             return True
         elif new_pos in next_level and apples != []:
             return True
-        
+
     elif key == "d":
         new_pos = [current_pos[0] + 1, current_pos[1]]
         if new_pos in walls or current_pos[0] + 1 > 14:
@@ -582,7 +579,6 @@ def switch_level(level_id, mod):
     # add modifier to current level and load corresponding map
     current_level = int(level_id) + mod
     current_pos = [] 
-    
     load_map(current_level)
 
 def save_data(action):
@@ -590,17 +586,14 @@ def save_data(action):
         case "score":
             with open("data/saved_data.json", "r") as file:
                 data = json.load(file)
-
             # fetches old top score for the current level from saved_data.json
             try:
                 old_score = data[f"Level {current_level}"]["score"]
             except:
                 old_score = 0
-
             # replace old score if new score is higher than the old one
             if old_score <= score:
                 data[f"Level {current_level}"] = {"score": max(score, 1)}
-
             with open("data/saved_data.json", "w") as file:
                 json.dump(data, file, indent = 4)
         case "reset":
@@ -611,7 +604,6 @@ def save_data(action):
 def score_system(action, position):
     # JL6079
     global apples, bananas, coins, score, combo
-        
     if action == "eat_apple":
         combo = combo + 3
         score = math.floor(score + (5 * combo))
@@ -623,7 +615,6 @@ def score_system(action, position):
     if action == "eat_coin":
         score = math.floor(score + max((100 * combo), 50))
         coins.remove(position)
-        
     elif action == "move":
         combo = max(combo - 1, 0)
 
@@ -665,7 +656,6 @@ def image_block(item, column, row, texture, size=100, rotation=0):
     label = Label(item.slaves()[0], image = get_image(texture))
     label.pack()
     label.config(bg=C3)
-    
 
 root.bind("<Escape>", quit) #sys.exit
 #root.iconbitmap("blume.ico")
