@@ -367,7 +367,7 @@ def switch_frame(frame):
 def switch_sidebar(frame):
     clear_frame(sidebar)
     if frame == "Mainmenu":
-        create_label(sidebar, ("Pac-man", 50), "top", "x", True, C3)
+        create_label(sidebar, ("Petri-man", 50), "top", "x", True, C3)
         
         menu_bar = create_row(sidebar, fill="x", expand=False, bg=C3)
         create_button(menu_bar, ("Play", 20), "top", "x", True, C3)
@@ -410,6 +410,7 @@ def movement_controls(column, row):
     root.bind("a", lambda event: position_handler("a"))
     root.bind("s", lambda event: position_handler("s"))
     root.bind("d", lambda event: position_handler("d"))
+    root.bind("r", lambda event: jump_point("Reset level"))
 
 def position_handler(move=""):
     if movement_validator(move):
@@ -655,7 +656,7 @@ def image_block(item, column, row, texture, size=100, rotation=0):
 
 root.bind("<Escape>", quit) #sys.exit
 #root.iconbitmap("blume.ico")
-root.title("Pac-man")
+root.title("Petri-man")
 #root.geometry("1000x600+100+100")
 #root.minsize(250, 200)
 root.attributes('-fullscreen', True)

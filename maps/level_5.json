@@ -22,7 +22,7 @@
             "None",
             "Wall",
             "Coin",
-            "None",
+            "Banana",
             "Enemy",
             "None"
         ],
@@ -79,7 +79,7 @@
             "Wall"
         ],
         [
-            "Apple",
+            "Banana",
             "Wall",
             "None",
             "Wall",
@@ -183,13 +183,13 @@
             "Coin"
         ],
         [
-            "Hole",
-            "None",
+            "Apple",
+            "Apple",
             "None",
             "None",
             "None",
             "Next level",
-            "Wall",
+            "Apple",
             "Apple",
             "None",
             "None",

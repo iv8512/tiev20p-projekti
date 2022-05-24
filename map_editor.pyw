@@ -679,7 +679,7 @@ def clear_frame(*frames):
 
 root.bind("<Escape>", quit) #sys.exit
 root.iconbitmap("icons/blume.ico")
-root.title("Pac-man LVL-Editor")
+root.title("Petri-man : Level editor")
 #root.geometry("1000x600+100+100")
 #root.minsize(250, 200)
 root.state('zoomed')
